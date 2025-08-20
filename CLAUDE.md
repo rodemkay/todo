@@ -10,9 +10,11 @@
 
 ### Claude Code CLI Umgebung
 1. **Claude Code läuft auf:** Ryzen Server in einem Kitty Terminal
-2. **Session:** tmux Session "claude"
-3. **Claude kann Befehle empfangen während der Arbeit** - Das ist normal!
-4. **Working Directory:** `/home/rodemkay/www/react/todo/`
+2. **Start-Script:** `/home/rodemkay/.local/bin/kitty_claude_fresh.sh`
+3. **Session:** tmux Session "claude" - LINKES PANE empfängt Befehle!
+4. **Claude kann Befehle empfangen während der Arbeit** - Das ist normal!
+5. **Working Directory:** `/home/rodemkay/www/react/todo/`
+6. **WICHTIG für ./todo:** Befehle kommen im LINKEN PANE an!
 
 ### Server-Architektur
 - **Ryzen Server (Development):** 
@@ -32,10 +34,12 @@
 - Ryzen: `100.89.207.122`
 - Hetzner: `100.67.210.46`
 
-### Webhook System
+### Webhook System & Remote Control
 - **Webhook Server:** Läuft auf Ryzen Server Port 8089
 - **Endpoint:** `http://100.89.207.122:8089/webhook`
 - **Empfängt Befehle:** `./todo` und `./todo -id [ID]`
+- **Befehlsempfang:** Im LINKEN PANE der Kitty/tmux Session
+- **Auto-Execution:** Befehle werden automatisch in Claude's Session ausgeführt
 - **Dokumentation:** Siehe `REMOTE_CONTROL_ARCHITECTURE.md`  
 
 ## 🚨 KRITISCHE REGELN

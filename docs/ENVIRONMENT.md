@@ -10,7 +10,7 @@
 │                   (Development & CLI)                         │
 │                                                              │
 │  - IP: 100.89.207.122 (Tailscale)                          │
-│  - Claude Code CLI (tmux session "claude")                  │
+│  - Claude Code CLI (tmux session "claude" - LEFT PANE)      │
 │  - Webhook Server (Port 8089)                              │
 │  - Mount Points zu Hetzner                                 │
 │  - Working Dir: /home/rodemkay/www/react/todo/            │
@@ -205,6 +205,13 @@ netstat -tlnp | grep 8089
 # Webhook neu starten
 cd /home/rodemkay/www/react/todo
 python3 webhook-server.py &
+
+# Claude Session prüfen (muss im LINKEN PANE sein!)
+tmux list-panes -t claude
+# Pane 0 = Links, Pane 1 = Rechts
+
+# Claude Session neu starten
+/home/rodemkay/.local/bin/kitty_claude_fresh.sh
 ```
 
 ### Problem: Plugin nicht sichtbar in WordPress
