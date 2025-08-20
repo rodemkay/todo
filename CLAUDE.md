@@ -3,8 +3,40 @@
 ## 🎯 PROJEKT-ÜBERSICHT
 **Projektname:** todo (früher wp-project-todos)  
 **Hauptverzeichnis:** `/home/rodemkay/www/react/todo/`  
-**Plugin-Pfad:** `/var/www/forexsignale/staging/wp-content/plugins/wp-project-todos/`  
-**Dokumentation:** `/home/rodemkay/www/react/todo/docs/`  
+**Plugin-Pfad:** `/var/www/forexsignale/staging/wp-content/plugins/todo/`  
+**Dokumentation:** `/home/rodemkay/www/react/todo/docs/`
+
+## 🖥️ ENVIRONMENT & INFRASTRUKTUR
+
+### Claude Code CLI Umgebung
+1. **Claude Code läuft auf:** Ryzen Server in einem Kitty Terminal
+2. **Session:** tmux Session "claude"
+3. **Claude kann Befehle empfangen während der Arbeit** - Das ist normal!
+4. **Working Directory:** `/home/rodemkay/www/react/todo/`
+
+### Server-Architektur
+- **Ryzen Server (Development):** 
+  - Tailscale IP: `100.89.207.122`
+  - Claude Code CLI läuft hier
+  - Webhook Server auf Port 8089
+  - Mount zu Hetzner via SSHFS
+
+- **Hetzner Server (Production/Staging):**
+  - Public IP: `159.69.157.54`
+  - Tailscale IP: `100.67.210.46`
+  - WordPress läuft hier
+  - **WICHTIG:** Nur im `/staging/` Ordner arbeiten!
+
+### ⚠️ KRITISCHE NETZWERK-REGEL
+**NIEMALS `localhost` verwenden!** Immer die Tailscale IPs nutzen:
+- Ryzen: `100.89.207.122`
+- Hetzner: `100.67.210.46`
+
+### Webhook System
+- **Webhook Server:** Läuft auf Ryzen Server Port 8089
+- **Endpoint:** `http://100.89.207.122:8089/webhook`
+- **Empfängt Befehle:** `./todo` und `./todo -id [ID]`
+- **Dokumentation:** Siehe `REMOTE_CONTROL_ARCHITECTURE.md`  
 
 ## 🚨 KRITISCHE REGELN
 
@@ -60,11 +92,19 @@
 - **Name:** staging_forexsignale
 - **Prefix:** stage_
 - **Haupttabelle:** stage_project_todos
+- **User:** ForexSignale
+- **phpMyAdmin:** https://forexsignale.trade/staging/phpmyadmin
 
 ### SSH-Zugang
-- **Host:** 159.69.157.54
+- **Host:** 159.69.157.54 (oder Tailscale: 100.67.210.46)
 - **User:** rodemkay
-- **WordPress:** /var/www/forexsignale/staging/
+- **WordPress Staging:** /var/www/forexsignale/staging/
+- **Plugin-Verzeichnis:** /var/www/forexsignale/staging/wp-content/plugins/todo/
+
+### Mount Points (Ryzen Server)
+- **Hetzner Mount:** /home/rodemkay/www/react/mounts/hetzner/
+- **Staging Mount:** /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/
+- **Live Mount:** /home/rodemkay/www/react/mounts/hetzner/forexsignale/ (READ-ONLY!)
 
 ### CLI-Befehle
 ```bash
