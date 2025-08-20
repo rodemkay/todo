@@ -1,9 +1,9 @@
 # 📋 TODO PROJECT - CLAUDE INSTRUCTIONS
 
 ## 🎯 PROJEKT-ÜBERSICHT
-**Projektname:** todo (früher wp-project-todos)  
+**Projektname:** todo (NICHT mehr wp-project-todos!)  
 **Hauptverzeichnis:** `/home/rodemkay/www/react/todo/`  
-**Plugin-Pfad:** `/var/www/forexsignale/staging/wp-content/plugins/todo/`  
+**Plugin-Pfad:** `/var/www/forexsignale/staging/wp-content/plugins/todo/` ⚠️ KEIN wp-project-todos mehr!  
 **Dokumentation:** `/home/rodemkay/www/react/todo/docs/`
 
 ## 🖥️ ENVIRONMENT & INFRASTRUKTUR
@@ -148,18 +148,33 @@ cd /home/rodemkay/www/react/todo
 npm test
 ```
 
-## 📊 WICHTIGE DATEIEN
+## 📊 WICHTIGE DATEIEN & DOKUMENTATIONEN
 
-### Plugin Core
-- `plugin/wp-project-todos.php` - Haupt-Plugin-Datei
-- `plugin/includes/class-admin.php` - Dashboard-Logik
-- `plugin/templates/wsj-dashboard.php` - Dashboard-Template
-- `plugin/admin/new-todo.php` - Neue Aufgabe Seite
+### 📚 Dokumentations-Verzeichnis
+**Hauptpfad:** `/home/rodemkay/www/react/todo/docs/`
+
+### Verfügbare Dokumentationen
+- **Environment:** `docs/ENVIRONMENT.md` - Komplette Infrastruktur
+- **Implementation Plan:** `docs/IMPLEMENTATION_PLAN.md` - Detaillierter Projektplan
+- **Claude Toggle:** `docs/claude-toggle-implementation.md` - Individual-Button Implementation
+- **Permissions:** `docs/permissions-www-data.md` - www-data User & Permissions
+- **Plugin Rename:** `docs/plugin-rename.md` - Umbenennung zu todo.php
+- **Migration Complete:** `docs/migration-complete.md` - ✅ Plugin jetzt in /plugins/todo/
+- **GitHub Setup:** `docs/GITHUB_SETUP.md` - Repository & Push Anleitung
+- **Current Status:** `docs/CURRENT_STATUS.md` - Aktueller Projektstatus
+- **Screenshots:** `docs/screenshots/` - UI-Referenzbilder
+
+### Plugin Core Files  
+⚠️ **WICHTIG: Alles in `/plugins/todo/` - KEIN wp-project-todos mehr!**
+- **Haupt-Plugin:** `/staging/wp-content/plugins/todo/todo.php`
+- **Dashboard-Logic:** `/staging/wp-content/plugins/todo/includes/class-admin.php`
+- **Dashboard-Template:** `/staging/wp-content/plugins/todo/templates/wsj-dashboard.php`
+- **New Task Page:** `/staging/wp-content/plugins/todo/admin/new-todo.php`
 
 ### Hook System
-- `hooks/consistency_validator.py` - Session-Validierung
-- `hooks/clear_violations.sh` - Violations bereinigen
-- `cli/todo` - Haupt-CLI-Script
+- **Validator:** `hooks/consistency_validator.py`
+- **Clear Script:** `hooks/clear_violations.sh`
+- **CLI Tool:** `cli/todo`
 
 ## ⚠️ WICHTIGE HINWEISE
 

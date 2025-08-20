@@ -1,46 +1,59 @@
-# 📋 TODO - Task Management System
+# 📋 TODO - WordPress Task Management Plugin
 
-Ein WordPress Plugin für professionelles Task-Management mit Claude CLI Integration.
+Ein fortschrittliches Task-Management-System für WordPress mit Claude Code CLI Integration.
 
 ## 🚀 Features
 
-- **WSJ-Style Dashboard** - Modernes, übersichtliches Design
-- **Claude Integration** - Direkte Task-Bearbeitung durch Claude
-- **Multi-Agent System** - Parallele Bearbeitung mit bis zu 30 Agents
-- **MCP Server Support** - Integration verschiedener MCP Server
-- **CRON Tasks** - Wiederkehrende Aufgaben automatisiert
-- **Hook System** - Automatisierung via CLI
+- **WordPress Integration**: Nahtlose Integration in WordPress Admin Dashboard
+- **Claude Code CLI Support**: Direkte Verbindung zu Claude Code über Webhooks
+- **Remote Control**: Tasks können remote über Buttons im WordPress Admin ausgelöst werden
+- **Hook System**: Automatisierte Workflows mit Hook-Integration
+- **WSJ-Style Dashboard**: Professionelles Design im Wall Street Journal Stil
 
-## 📂 Struktur
+## 📂 Projekt-Struktur
 
 ```
 todo/
-├── docs/           # Dokumentation
-├── plugin/         # WordPress Plugin Code
-├── hooks/          # Hook System
-├── cli/            # CLI Tools
-├── tests/          # Playwright Tests
-└── scripts/        # Utility Scripts
+├── cli/               # Command Line Interface Tools
+├── docs/              # Dokumentation und Screenshots
+├── hooks/             # Hook System für Automatisierung
+├── plugin/            # WordPress Plugin Code
+├── scripts/           # Utility Scripts
+└── tests/            # Playwright Tests
 ```
 
-## 🔧 Installation
+## 🛠️ Installation
 
-### 1. Repository klonen
+### 1. Plugin zu WordPress hinzufügen
+
 ```bash
-git clone https://github.com/rodemkay/todo.git
-cd todo
+# Plugin zum WordPress Staging kopieren
+rsync -avz plugin/ rodemkay@159.69.157.54:/var/www/forexsignale/staging/wp-content/plugins/todo/
 ```
 
-### 2. Plugin installieren
+### 2. Plugin aktivieren
+
+Im WordPress Admin unter Plugins → TODO aktivieren.
+
+### 3. CLI Tool einrichten
+
 ```bash
-# Sync zum WordPress Server
-./scripts/deploy.sh staging
+# CLI Tool ausführbar machen
+chmod +x cli/todo
+
+# Symlink erstellen (optional)
+ln -s /home/rodemkay/www/react/todo/cli/todo ~/bin/todo
 ```
 
-### 3. Plugin aktivieren
-Im WordPress Admin unter Plugins → TODO aktivieren
+## 🖥️ Verwendung
 
-## 💻 CLI Verwendung
+### WordPress Admin
+
+- **Dashboard**: `Einstellungen → TODO Dashboard`
+- **Neue Aufgabe**: Button "Neue Aufgabe" im Dashboard
+- **Remote Control**: "An Claude" Button für direkte Ausführung
+
+### CLI Commands
 
 ```bash
 # Nächstes Todo laden
@@ -54,7 +67,29 @@ Im WordPress Admin unter Plugins → TODO aktivieren
 
 # Alle Todos anzeigen
 ./todo list
+
+# Status anzeigen
+./todo status
 ```
+
+## 🔧 Konfiguration
+
+### Webhook Server
+
+Der Webhook Server läuft auf Port 8089 und empfängt Befehle vom WordPress Plugin:
+
+```bash
+# Webhook Server Status prüfen
+ps aux | grep webhook
+```
+
+### Hook System
+
+Das Hook System ermöglicht automatisierte Workflows:
+
+- **Pre-Task Hook**: Vor Task-Ausführung
+- **Post-Task Hook**: Nach Task-Abschluss
+- **Status Changed Hook**: Bei Status-Änderungen
 
 ## 🧪 Testing
 
@@ -62,45 +97,39 @@ Im WordPress Admin unter Plugins → TODO aktivieren
 # Playwright Tests ausführen
 npm test
 
-# Einzelnen Test ausführen
-npm test dashboard
+# Spezifischen Test ausführen
+npx playwright test tests/dashboard.spec.js
 ```
 
 ## 📝 Dokumentation
 
-- [Implementationsplan](docs/IMPLEMENTATION_PLAN.md)
-- [Architektur](docs/ARCHITECTURE.md)
-- [API Referenz](docs/API_REFERENCE.md)
-- [Screenshots](docs/screenshots/)
+Weitere Dokumentation finden Sie im `docs/` Verzeichnis:
 
-## 🚀 Deployment
+- `IMPLEMENTATION_PLAN.md` - Detaillierter Implementierungsplan
+- `infrastructure.md` - Infrastruktur-Übersicht
+- `screenshots/` - UI Referenzbilder
 
-### Staging
-```bash
-./scripts/deploy.sh staging
-```
+## 🤝 Contributing
 
-### Production
-```bash
-./scripts/deploy.sh production
-```
+1. Fork das Repository
+2. Erstelle einen Feature Branch
+3. Committe deine Änderungen
+4. Push zum Branch
+5. Erstelle einen Pull Request
 
-## 📊 Status
+## 📄 Lizenz
 
-- ✅ Verzeichnisstruktur
-- ⏳ Claude Toggle Implementation
-- ⏳ Working Directory Dropdown
-- ⏳ Save ohne Redirect
-- ⏳ CRON Integration
-- ⏳ Hook System Stabilisierung
+Proprietär - Alle Rechte vorbehalten
 
-## 📞 Support
+## 👤 Autor
 
-Bei Fragen oder Problemen: [Issues](https://github.com/rodemkay/todo/issues)
+**Maik von ForexSignale.trade**
 
-## 📜 Lizenz
+## 🆘 Support
 
-Proprietary - Alle Rechte vorbehalten
+Bei Fragen oder Problemen:
+- GitHub Issues erstellen
+- Email an support@forexsignale.trade
 
 ---
 

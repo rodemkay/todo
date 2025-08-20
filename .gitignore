@@ -33,7 +33,10 @@ wp-config.php
 # Temporary files
 *.tmp
 *.bak
+*.bak[0-9]*
+*.bak9[0-9]*
 *.backup
+*.backup-*
 *.cache
 /tmp/
 
