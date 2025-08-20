@@ -1,0 +1,361 @@
+/**
+ * WP Project Todos - WSJ Dashboard Styles
+ * 6-Column Layout with Professional Styling
+ */
+
+/* WSJ Color Variables */
+:root {
+    --wsj-border: #e5e7eb;
+    --wsj-text-primary: #1f2937;
+    --wsj-text-secondary: #6b7280;
+    --wsj-bg-header: #f9fafb;
+    --wsj-bg-hover: #f3f4f6;
+    --wsj-accent: #4f46e5;
+    --wsj-accent-hover: #4338ca;
+    --wsj-serif: 'Playfair Display', 'Georgia', serif;
+    --wsj-sans: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Dashboard Container */
+.wsj-dashboard-container {
+    max-width: 100%;
+    margin: 20px auto;
+    font-family: var(--wsj-sans);
+    color: var(--wsj-text-primary);
+}
+
+/* Header Section */
+.wsj-dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--wsj-border);
+}
+
+.wsj-dashboard-title {
+    font-family: var(--wsj-serif);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--wsj-text-primary);
+}
+
+/* Filter & Bulk Actions Bar */
+.wsj-filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--wsj-bg-header);
+    padding: 15px;
+    border: 1px solid var(--wsj-border);
+    margin-bottom: 20px;
+}
+
+.wsj-status-filters {
+    display: flex;
+    gap: 10px;
+}
+
+.wsj-filter-btn {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid var(--wsj-border);
+    color: var(--wsj-text-secondary);
+    text-decoration: none;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.wsj-filter-btn:hover {
+    background: var(--wsj-bg-hover);
+    color: var(--wsj-text-primary);
+    border-color: var(--wsj-text-secondary);
+}
+
+.wsj-filter-btn.active {
+    background: var(--wsj-accent);
+    color: white;
+    border-color: var(--wsj-accent);
+}
+
+/* Bulk Actions */
+.wsj-bulk-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wsj-bulk-select {
+    padding: 6px 12px;
+    border: 1px solid var(--wsj-border);
+    background: white;
+    color: var(--wsj-text-primary);
+    font-size: 14px;
+}
+
+.wsj-bulk-btn {
+    padding: 6px 16px;
+    background: var(--wsj-text-secondary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.wsj-bulk-btn:hover {
+    background: var(--wsj-text-primary);
+}
+
+/* 6-Column Table Layout */
+.wsj-todos-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border: 1px solid var(--wsj-border);
+}
+
+.wsj-todos-table thead {
+    background: var(--wsj-bg-header);
+    border-bottom: 2px solid var(--wsj-border);
+}
+
+.wsj-todos-table th {
+    padding: 12px 8px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--wsj-text-secondary);
+}
+
+/* Column Widths */
+.wsj-col-1 { width: 8%; }  /* Checkbox/ID/Bereich */
+.wsj-col-2 { width: 25%; } /* Titel/Beschreibung */
+.wsj-col-3 { width: 12%; } /* Status/Priorität */
+.wsj-col-4 { width: 12%; } /* Claude/Anhänge */
+.wsj-col-5 { width: 15%; } /* Erstellt/Geändert */
+.wsj-col-6 { width: 28%; } /* Verzeichnis/Buttons */
+
+.wsj-todos-table tbody tr {
+    border-bottom: 1px solid var(--wsj-border);
+    transition: background 0.2s;
+}
+
+.wsj-todos-table tbody tr:hover {
+    background: var(--wsj-bg-hover);
+}
+
+.wsj-todos-table td {
+    padding: 10px 8px;
+    vertical-align: top;
+}
+
+/* Column 1: Checkbox/ID/Bereich */
+.wsj-col-checkbox {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wsj-todo-id {
+    font-weight: 600;
+    color: var(--wsj-text-secondary);
+    font-size: 13px;
+}
+
+.wsj-todo-scope {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-radius: 3px;
+}
+
+.wsj-scope-frontend { background: #eff6ff; color: #1e40af; }
+.wsj-scope-backend { background: #f0fdf4; color: #166534; }
+.wsj-scope-n8n { background: #fef3c7; color: #92400e; }
+.wsj-scope-mt5 { background: #faf5ff; color: #6b21a8; }
+
+/* Column 2: Titel/Beschreibung */
+.wsj-todo-title {
+    font-weight: 600;
+    color: var(--wsj-text-primary);
+    font-size: 14px;
+    margin-bottom: 5px;
+    text-decoration: none;
+    display: block;
+}
+
+.wsj-todo-title:hover {
+    color: var(--wsj-accent);
+    text-decoration: underline;
+}
+
+.wsj-todo-description {
+    color: var(--wsj-text-secondary);
+    font-size: 13px;
+    line-height: 1.4;
+    max-width: 300px;
+}
+
+/* Column 3: Status/Priorität */
+.wsj-status-select {
+    width: 100%;
+    padding: 4px 8px;
+    border: 1px solid var(--wsj-border);
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.wsj-priority {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 12px;
+    font-weight: 500;
+    border-radius: 3px;
+}
+
+.wsj-priority-high { background: #fee2e2; color: #991b1b; }
+.wsj-priority-medium { background: #fed7aa; color: #9a3412; }
+.wsj-priority-low { background: #dbeafe; color: #1e3a8a; }
+
+/* Column 4: Claude/Anhänge */
+.wsj-claude-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.wsj-claude-checkbox {
+    width: 16px;
+    height: 16px;
+}
+
+.wsj-attachments {
+    color: var(--wsj-text-secondary);
+    font-size: 12px;
+}
+
+.wsj-attachment-count {
+    background: var(--wsj-bg-header);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+}
+
+/* Column 5: Timestamps */
+.wsj-timestamps {
+    font-size: 12px;
+    color: var(--wsj-text-secondary);
+    line-height: 1.5;
+}
+
+.wsj-timestamp-label {
+    font-weight: 500;
+}
+
+/* Column 6: Directory/Actions */
+.wsj-working-dir {
+    font-family: 'Monaco', 'Consolas', monospace;
+    font-size: 11px;
+    color: var(--wsj-text-secondary);
+    background: var(--wsj-bg-header);
+    padding: 4px 6px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+    word-break: break-all;
+}
+
+.wsj-action-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+.wsj-action-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    text-align: center;
+    border: 1px solid var(--wsj-border);
+    background: white;
+    color: var(--wsj-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.wsj-action-btn:hover {
+    background: var(--wsj-accent);
+    color: white;
+    border-color: var(--wsj-accent);
+}
+
+.wsj-action-btn.danger:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+/* Webhook Control Bar */
+.wsj-webhook-bar {
+    margin-top: 20px;
+    padding: 15px;
+    background: var(--wsj-bg-header);
+    border: 1px solid var(--wsj-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.wsj-webhook-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wsj-status-indicator {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #dc2626;
+}
+
+.wsj-status-indicator.online {
+    background: #10b981;
+}
+
+.wsj-loop-btn {
+    padding: 8px 20px;
+    background: var(--wsj-text-primary);
+    color: white;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.wsj-loop-btn:hover {
+    background: var(--wsj-accent);
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .wsj-action-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 1024px) {
+    .wsj-todos-table {
+        display: block;
+        overflow-x: auto;
+    }
+}

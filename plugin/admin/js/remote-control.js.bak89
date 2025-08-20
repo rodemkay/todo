@@ -1,0 +1,422 @@
+/**
+ * Remote Control JavaScript für Claude CLI
+ */
+jQuery(document).ready(function($) {
+    'use strict';
+    
+    const $statusDiv = $('#claude-status');
+    const $statusText = $statusDiv.find('p');
+    const $startBtn = $('#start-claude-btn');
+    const $todoBtn = $('#send-todo-btn');
+    const $todoMainBtn = $('#send-todo-main');
+    const $todoAllBtn = $('#send-todo-all');
+    const $todoSingleBtn = $('#send-todo-single');
+    const $todoCompleteBtn = $('#send-todo-complete');
+    const $todoCountBtn = $('#send-todo-count');
+    const $todoWatchBtn = $('#send-todo-watch');
+    const $startWatchScriptBtn = $('#start-watch-script');
+    const $stopWatchScriptBtn = $('#stop-watch-script');
+    const $statusBtn = $('#check-status-btn');
+    const $toggleDetails = $('#toggle-details');
+    const $advancedSection = $('#advanced-section');
+    const $commandInput = $('.command-input');
+    const $customCommand = $('#custom-command');
+    const $sendCustom = $('#send-custom-command');
+    const $statusIndicator = $('.status-indicator');
+    const $statusTextDisplay = $('.status-text');
+    const $lastOutput = $('#last-output-content');
+    
+    let claudeStatus = 'unknown';
+    let isWorking = false;
+    
+    /**
+     * Show status message
+     */
+    function showStatus(message, type = 'info') {
+        $statusDiv
+            .removeClass('notice-success notice-error notice-info')
+            .addClass('notice-' + type)
+            .show();
+        $statusText.html(message);
+        
+        if (type === 'success') {
+            setTimeout(() => {
+                $statusDiv.fadeOut();
+            }, 5000);
+        }
+    }
+    
+    /**
+     * Start Claude on RyzenServer
+     */
+    $startBtn.on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        showStatus(wpProjectTodosRemote.strings.starting, 'info');
+        
+        $.ajax({
+            url: wpProjectTodosRemote.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'start_claude_remote',
+                nonce: wpProjectTodosRemote.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    showStatus(response.data.message, 'success');
+                    $todoBtn.show();
+                    $commandInput.show();
+                    
+                    // Auto-send ./todo after 2 seconds
+                    setTimeout(() => {
+                        $todoBtn.click();
+                    }, 2000);
+                } else {
+                    showStatus(response.data.message + '<br><code>' + response.data.error + '</code>', 'error');
+                }
+            },
+            error: function() {
+                showStatus(wpProjectTodosRemote.strings.error, 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+    
+    /**
+     * Send ./todo command (old button)
+     */
+    $todoBtn.on('click', function() {
+        sendCommand('./todo');
+    });
+    
+    /**
+     * Main todo button - smart behavior (alte Version für Kompatibilität)
+     */
+    $todoMainBtn.on('click', function() {
+        if (claudeStatus === 'running') {
+            // Claude läuft bereits, direkt ./todo senden
+            sendCommand('./todo');
+        } else {
+            // Claude läuft nicht, erst starten dann ./todo
+            showStatus('Claude wird gestartet und ./todo wird ausgeführt...', 'info');
+            startClaudeAndSendTodo();
+        }
+    });
+    
+    /**
+     * Neue Todo-Buttons mit verschiedenen Befehlen
+     */
+    // Alle Todos laden
+    $todoAllBtn.on('click', function() {
+        const command = $(this).data('command') || './todo all';
+        showStatus('Lade alle ausstehenden Todos...', 'info');
+        sendCommand(command);
+    });
+    
+    // Einzelnes Todo laden
+    $todoSingleBtn.on('click', function() {
+        const command = $(this).data('command') || './todo';
+        sendCommand(command);
+    });
+    
+    // Todo abschließen
+    $todoCompleteBtn.on('click', function() {
+        const command = $(this).data('command') || './todo complete';
+        showStatus('Schließe aktuelles Todo ab...', 'info');
+        sendCommand(command);
+    });
+    
+    // Anzahl anzeigen
+    $todoCountBtn.on('click', function() {
+        const command = $(this).data('command') || './todo count';
+        sendCommand(command);
+    });
+    
+    // Watch-Modus starten
+    $todoWatchBtn.on('click', function() {
+        const command = $(this).data('command') || './todo watch';
+        showStatus('Starte Watch-Modus...', 'info');
+        sendCommand(command);
+    });
+    
+    // Watch-Script starten
+    $startWatchScriptBtn.on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        showStatus('Starte Watch-Script für Button-Commands...', 'info');
+        
+        $.ajax({
+            url: wpProjectTodosRemote.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'start_watch_script',
+                nonce: wpProjectTodosRemote.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    showStatus(response.data.message + ' Der ./todo Button sollte jetzt funktionieren.', 'success');
+                } else {
+                    showStatus('Fehler beim Starten des Watch-Scripts', 'error');
+                }
+            },
+            error: function() {
+                showStatus('Fehler beim Starten des Watch-Scripts', 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+    
+    // Watch-Script stoppen
+    $stopWatchScriptBtn.on('click', function() {
+        const $btn = $(this);
+        $btn.prop('disabled', true);
+        showStatus('Stoppe Watch-Script...', 'info');
+        
+        $.ajax({
+            url: wpProjectTodosRemote.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'stop_watch_script',
+                nonce: wpProjectTodosRemote.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    showStatus(response.data.message, 'success');
+                } else {
+                    showStatus('Fehler beim Stoppen des Watch-Scripts', 'error');
+                }
+            },
+            error: function() {
+                showStatus('Fehler beim Stoppen des Watch-Scripts', 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+    
+    /**
+     * Toggle advanced section
+     */
+    $toggleDetails.on('click', function(e) {
+        e.preventDefault();
+        $advancedSection.slideToggle(300);
+    });
+    
+    /**
+     * Send custom command
+     */
+    $sendCustom.on('click', function() {
+        const command = $customCommand.val().trim();
+        if (command) {
+            sendCommand(command);
+        }
+    });
+    
+    /**
+     * Send command via Enter key
+     */
+    $customCommand.on('keypress', function(e) {
+        if (e.which === 13) {
+            e.preventDefault();
+            $sendCustom.click();
+        }
+    });
+    
+    /**
+     * Send command to Claude
+     */
+    function sendCommand(command) {
+        showStatus(wpProjectTodosRemote.strings.sending, 'info');
+        
+        $.ajax({
+            url: wpProjectTodosRemote.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'send_command_remote',
+                nonce: wpProjectTodosRemote.nonce,
+                command: command
+            },
+            success: function(response) {
+                if (response.success) {
+                    let message = response.data.message;
+                    
+                    // Zeige zusätzliche Informationen an
+                    if (response.data.method) {
+                        message += ' <small>(Methode: ' + response.data.method + ')</small>';
+                    }
+                    if (response.data.execution_time_ms) {
+                        message += ' <small>(' + response.data.execution_time_ms + 'ms)</small>';
+                    }
+                    
+                    showStatus(message, 'success');
+                    $customCommand.val('');
+                    
+                    // Auto-refresh status nach erfolgreichem Befehl
+                    setTimeout(() => {
+                        checkStatus();
+                    }, 1000);
+                } else {
+                    let errorMsg = response.data.message;
+                    if (response.data.debug) {
+                        errorMsg += '<br><small><strong>Debug:</strong> ' + JSON.stringify(response.data.debug) + '</small>';
+                    }
+                    showStatus(errorMsg, 'error');
+                }
+            },
+            error: function(xhr, status, error) {
+                showStatus('Netzwerk-Fehler beim Senden des Befehls: ' + error, 'error');
+            }
+        });
+    }
+    
+    /**
+     * Start Claude and send ./todo
+     */
+    function startClaudeAndSendTodo() {
+        $.ajax({
+            url: wpProjectTodosRemote.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'start_claude_remote',
+                nonce: wpProjectTodosRemote.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    claudeStatus = 'running';
+                    updateStatusDisplay();
+                    
+                    // Nach 2 Sekunden ./todo senden
+                    setTimeout(() => {
+                        sendCommand('./todo');
+                    }, 2000);
+                } else {
+                    showStatus('Fehler beim Starten: ' + response.data.message, 'error');
+                }
+            }
+        });
+    }
+    
+    /**
+     * Update status display
+     */
+    function updateStatusDisplay() {
+        $statusIndicator.removeClass('active idle offline');
+        
+        if (claudeStatus === 'running') {
+            if (isWorking) {
+                $statusIndicator.addClass('active');
+                $statusTextDisplay.text('Arbeitet...');
+            } else {
+                $statusIndicator.addClass('idle');
+                $statusTextDisplay.text('Bereit');
+            }
+            $startBtn.hide();
+        } else {
+            $statusIndicator.addClass('offline');
+            $statusTextDisplay.text('Offline');
+            $startBtn.show();
+        }
+    }
+    
+    /**
+     * Check Claude status
+     */
+    $statusBtn.on('click', function() {
+        checkStatus();
+    });
+    
+    function checkStatus() {
+        $.ajax({
+            url: wpProjectTodosRemote.ajaxurl,
+            type: 'POST',
+            data: {
+                action: 'check_claude_status',
+                nonce: wpProjectTodosRemote.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+                    claudeStatus = data.status;
+                    
+                    // Prüfe ob Claude arbeitet basierend auf der Ausgabe
+                    if (data.last_output) {
+                        $lastOutput.text(data.last_output);
+                        // Einfache Heuristik: Wenn die letzte Zeile kein Prompt ist, arbeitet Claude
+                        isWorking = !data.last_output.match(/\$\s*$/m);
+                    }
+                    
+                    updateStatusDisplay();
+                    
+                    if (claudeStatus !== 'running') {
+                        $todoBtn.hide();
+                        $commandInput.hide();
+                    }
+                }
+            },
+            error: function() {
+                claudeStatus = 'unknown';
+                updateStatusDisplay();
+            }
+        });
+    }
+    
+    /**
+     * Check status on page load
+     */
+    setTimeout(() => {
+        checkStatus();
+    }, 500);
+    
+    /**
+     * Add keyboard shortcut (Ctrl+Shift+C) to start Claude
+     */
+    $(document).on('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 67) {
+            e.preventDefault();
+            if (claudeStatus !== 'running') {
+                $startBtn.click();
+            }
+        }
+    });
+    
+    /**
+     * Add keyboard shortcut (Ctrl+Shift+T) to send ./todo
+     */
+    $(document).on('keydown', function(e) {
+        if (e.ctrlKey && e.shiftKey && e.keyCode === 84) {
+            e.preventDefault();
+            $todoMainBtn.click();
+        }
+    });
+    
+    /**
+     * Auto-refresh status every 10 seconds
+     */
+    let statusInterval;
+    function startStatusMonitoring() {
+        if (statusInterval) {
+            clearInterval(statusInterval);
+        }
+        
+        statusInterval = setInterval(() => {
+            checkStatus();
+        }, 10000);
+    }
+    
+    // Start monitoring
+    startStatusMonitoring();
+    
+    /**
+     * Clean up on page unload
+     */
+    $(window).on('beforeunload', function() {
+        if (statusInterval) {
+            clearInterval(statusInterval);
+        }
+    });
+});

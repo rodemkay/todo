@@ -1,0 +1,625 @@
+<?php
+/**
+ * Admin class
+ *
+ * @package WP_Project_Todos
+ */
+
+namespace WP_Project_Todos;
+
+class Admin {
+    
+    private $model;
+    private $attachment_model;
+    
+    public function __construct() {
+        $this->model = new Todo_Model();
+        require_once WP_PROJECT_TODOS_PLUGIN_DIR . 'includes/class-attachment-model.php';
+        $this->attachment_model = new Attachment_Model();
+    }
+    
+    public function enqueue_styles() {
+        wp_enqueue_style('wp-project-todos-admin', WP_PROJECT_TODOS_PLUGIN_URL . 'admin/css/admin.css', [], WP_PROJECT_TODOS_VERSION);
+    }
+    
+    public function enqueue_scripts() {
+        wp_enqueue_script('wp-project-todos-admin', WP_PROJECT_TODOS_PLUGIN_URL . 'admin/js/admin.js', ['jquery'], WP_PROJECT_TODOS_VERSION, true);
+    }
+    
+    public function add_menu_pages() {
+        // Menüs werden bereits in wp-project-todos.php registriert
+        // Diese Methode wird nicht mehr benötigt
+        return;
+    }
+    
+    public function render_list_page() {
+        // Handle bulk actions
+        if (isset($_POST["bulk_action"]) && !empty($_POST["bulk_action"]) && isset($_POST["todo_ids"])) {
+            if (wp_verify_nonce($_POST["bulk_nonce"], "bulk_action")) {
+                $action = sanitize_key($_POST["bulk_action"]);
+                $ids = array_map("intval", $_POST["todo_ids"]);
+                
+                foreach ($ids as $id) {
+                    switch ($action) {
+                        case "delete":
+                            $this->model->delete($id);
+                            break;
+                        case "pending":
+                        case "in_progress":
+                        case "completed":
+                            $this->model->update_status($id, $action);
+                            break;
+                        case "enable_claude":
+                            $this->model->update($id, ["bearbeiten" => 1]);
+                            break;
+                        case "disable_claude":
+                            $this->model->update($id, ["bearbeiten" => 0]);
+                            break;
+                    }
+                }
+                echo "<div class="notice notice-success"><p>" . sprintf(__("%d Aufgaben bearbeitet", "wp-project-todos"), count($ids)) . "</p></div>";
+            }
+        }
+        // Handle delete action
+        if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+            if (wp_verify_nonce($_GET['_wpnonce'], 'delete_todo_' . $_GET['id'])) {
+                $result = $this->model->delete($_GET['id']);
+                if (!is_wp_error($result)) {
+                    echo '<div class="notice notice-success"><p>' . __('Aufgabe gelöscht!', 'wp-project-todos') . '</p></div>';
+                }
+            }
+        }
+        
+        // Handle status update
+        if (isset($_POST['update_status']) && isset($_POST['todo_id']) && isset($_POST['new_status'])) {
+            if (wp_verify_nonce($_POST['_wpnonce'], 'update_status_' . $_POST['todo_id'])) {
+                $this->model->update_status($_POST['todo_id'], $_POST['new_status']);
+                echo '<div class="notice notice-success"><p>' . __('Status aktualisiert!', 'wp-project-todos') . '</p></div>';
+            }
+        }
+        
+        // Handle bearbeiten toggle
+        if (isset($_POST['toggle_bearbeiten']) && isset($_POST['todo_id'])) {
+            if (wp_verify_nonce($_POST['_wpnonce'], 'toggle_bearbeiten_' . $_POST['todo_id'])) {
+                $todo = $this->model->get_by_id($_POST['todo_id']);
+                if ($todo) {
+                    $new_value = $todo->bearbeiten ? 0 : 1;
+                    $this->model->update($_POST['todo_id'], ['bearbeiten' => $new_value]);
+                    echo '<div class="notice notice-success"><p>' . 
+                         ($new_value ? __('Aufgabe wird nun von Claude bearbeitet', 'wp-project-todos') : 
+                                      __('Aufgabe wird von Claude übersprungen', 'wp-project-todos')) . 
+                         '</p></div>';
+                }
+            }
+        }
+        
+        $filter_args = []; if (isset($_GET["filter_status"])) { $filter_args["status"] = sanitize_key($_GET["filter_status"]); } $todos = $this->model->get_all($filter_args);
+        ?>
+        <div class="wrap">
+            <h1><?php _e('Project To-Dos', 'wp-project-todos'); ?>
+            <?php do_action("wp_project_todos_before_list"); ?>
+                <a href="<?php echo admin_url('admin.php?page=wp-project-todos-new'); ?>" class="page-title-action">
+                    <?php _e('Neue Aufgabe', 'wp-project-todos'); ?>
+                </a>
+            </h1>
+            <style>
+            
+            <!-- Status Filter -->
+            <div style="margin-bottom: 20px; display: flex; gap: 10px; align-items: center;">
+                <label style="font-weight: bold;">Filter:</label>
+                <a href="?page=wp-project-todos" class="button <?php echo !isset($_GET["filter_status"]) ? "button-primary" : ""; ?>">Alle</a>
+                <a href="?page=wp-project-todos&filter_status=pending" class="button <?php echo isset($_GET["filter_status"]) && $_GET["filter_status"] == "pending" ? "button-primary" : ""; ?>">📋 Ausstehend</a>
+                <a href="?page=wp-project-todos&filter_status=in_progress" class="button <?php echo isset($_GET["filter_status"]) && $_GET["filter_status"] == "in_progress" ? "button-primary" : ""; ?>">🔄 In Bearbeitung</a>
+                <a href="?page=wp-project-todos&filter_status=completed" class="button <?php echo isset($_GET["filter_status"]) && $_GET["filter_status"] == "completed" ? "button-primary" : ""; ?>">✅ Abgeschlossen</a>
+                <a href="?page=wp-project-todos&filter_status=blocked" class="button <?php echo isset($_GET["filter_status"]) && $_GET["filter_status"] == "blocked" ? "button-primary" : ""; ?>">🚫 Blockiert</a>
+            </div>
+                .status-dropdown {
+                    padding: 4px 8px;
+                    border: 1px solid #ddd;
+                    border-radius: 3px;
+                    font-size: 13px;
+                }
+                .status-pending { background-color: #fff3cd; }
+                        <th style="width: 30px;"><input type="checkbox" onclick="toggleAll(this)" /></th>
+                .status-in_progress { background-color: #cfe2ff; }
+                .status-completed { background-color: #d1e7dd; }
+                .status-blocked { background-color: #f8d7da; }
+                .status-cancelled { background-color: #e2e3e5; }
+                .delete-link { color: #dc3545; }
+                .delete-link:hover { color: #a02833; }
+            </style>
+            
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th><?php _e('Titel', 'wp-project-todos'); ?></th>
+                        <th><?php _e('Bereich', 'wp-project-todos'); ?></th>
+                        <th><?php _e('Status', 'wp-project-todos'); ?></th>
+                        <td><input type="checkbox" class="todo-checkbox" name="todo_ids[]" value="<?php echo $todo->id; ?>" /></td>
+                        <th><?php _e('Priorität', 'wp-project-todos'); ?></th>
+                        <th><?php _e('Claude', 'wp-project-todos'); ?></th>
+                        <th><?php _e('Anhänge', 'wp-project-todos'); ?></th>
+                        <th><?php _e('Arbeitsverzeichnis', 'wp-project-todos'); ?></th>
+                        <th><?php _e('Aktionen', 'wp-project-todos'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($todos as $todo): ?>
+                    <tr>
+                        <td>#<?php echo $todo->id; ?></td>
+                        <td><strong><a href="<?php echo admin_url("admin.php?page=wp-project-todos-new&id=" . $todo->id); ?>" style="text-decoration: none; color: inherit;"><?php echo esc_html($todo->title); ?></a></strong></td>
+                        <td><?php echo esc_html($todo->scope); ?></td>
+                        <td>
+                            <form method="post" style="display: inline;">
+                                <?php wp_nonce_field('update_status_' . $todo->id); ?>
+                                <input type="hidden" name="todo_id" value="<?php echo $todo->id; ?>">
+                                <select name="new_status" class="status-dropdown status-<?php echo esc_attr($todo->status); ?>" onchange="this.form.submit()">
+                                    <option value="pending" <?php selected($todo->status, 'pending'); ?>><?php _e('Ausstehend', 'wp-project-todos'); ?></option>
+                                    <option value="in_progress" <?php selected($todo->status, 'in_progress'); ?>><?php _e('In Bearbeitung', 'wp-project-todos'); ?></option>
+                                    <option value="completed" <?php selected($todo->status, 'completed'); ?>><?php _e('Abgeschlossen', 'wp-project-todos'); ?></option>
+                                    <option value="blocked" <?php selected($todo->status, 'blocked'); ?>><?php _e('Blockiert', 'wp-project-todos'); ?></option>
+                                    <option value="cancelled" <?php selected($todo->status, 'cancelled'); ?>><?php _e('Abgebrochen', 'wp-project-todos'); ?></option>
+                                </select>
+                                <input type="hidden" name="update_status" value="1">
+                            </form>
+                        </td>
+                        <td><?php echo esc_html($todo->priority); ?></td>
+                        <td>
+                            <form method="post" style="display: inline;">
+                                <?php wp_nonce_field('toggle_bearbeiten_' . $todo->id); ?>
+                                <input type="hidden" name="todo_id" value="<?php echo $todo->id; ?>">
+                                <input type="hidden" name="toggle_bearbeiten" value="1">
+                                <button type="submit" style="background: none; border: none; cursor: pointer; font-size: 20px;" 
+                                        title="<?php echo $todo->bearbeiten ? 'Claude bearbeitet diese Aufgabe' : 'Claude überspringt diese Aufgabe'; ?>">
+                                    <?php echo $todo->bearbeiten ? '✅' : '❌'; ?>
+                                </button>
+                            </form>
+                        </td>
+                        <td>
+                            <?php 
+                            $count = isset($todo->attachment_count) ? $todo->attachment_count : 0;
+                            if ($count > 0): ?>
+                                <span style="background: #007cba; color: white; padding: 2px 8px; border-radius: 12px; font-size: 12px;">
+                                    📎 <?php echo $count; ?>
+                                </span>
+                            <?php else: ?>
+                                <span style="color: #999;">-</span>
+                            <?php endif; ?>
+                        </td>
+                        <td><code><?php echo esc_html($todo->working_directory); ?></code></td>
+                        <td>
+                            <?php if ($todo->status !== 'completed'): ?>
+                            <a href="<?php echo admin_url('admin.php?page=wp-project-todos-continue&id=' . $todo->id); ?>" class="button button-small" style="background: #28a745; color: white;">
+                                🔄 <?php _e('Weiterführen', 'wp-project-todos'); ?>
+                            </a>
+                            <?php endif; ?>
+                            <?php if (!empty($todo->claude_notes) || !empty($todo->bemerkungen)): ?>
+                            <a href="<?php echo admin_url('admin.php?page=wp-project-todos-report&id=' . $todo->id); ?>" class="button button-small" style="background: #667eea; color: white;" target="_blank">
+                                📄 <?php _e('Bericht', 'wp-project-todos'); ?>
+                            </a>
+                            <?php endif; ?>
+                            <a href="<?php echo admin_url('admin.php?page=wp-project-todos-claude&todo_id=' . $todo->id); ?>" class="button button-small">
+                                💻 <?php _e('Output', 'wp-project-todos'); ?>
+                            </a>
+                            <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=wp-project-todos&action=delete&id=' . $todo->id), 'delete_todo_' . $todo->id); ?>" 
+                               class="button button-small" style="background: #dc3545; color: white;"
+                               onclick="return confirm('<?php _e('Wirklich löschen?', 'wp-project-todos'); ?>');">
+                                🗑️ <?php _e('Löschen', 'wp-project-todos'); ?>
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            
+            <?php do_action("wp_project_todos_after_list"); ?>
+        </div>
+        <?php
+    }
+    
+    public function render_new_page() {
+        // Handle form submission BEFORE rendering
+        if (isset($_POST['submit']) && wp_verify_nonce($_POST['wp_project_todos_nonce'], 'wp_project_todos_edit')) {
+            $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+            $data = [
+                'title' => sanitize_text_field($_POST['title']),
+                'description' => wp_kses_post($_POST['description']),
+                'scope' => sanitize_key($_POST['scope']),
+                'status' => sanitize_key($_POST['status']),
+                'priority' => sanitize_key($_POST['priority']),
+                'bearbeiten' => isset($_POST['bearbeiten']) ? 1 : 1,
+                'claude_mode' => sanitize_key($_POST['claude_mode']),
+                'working_directory' => sanitize_text_field($_POST['working_directory']),
+                'estimated_hours' => floatval($_POST['estimated_hours']),
+                'bemerkungen' => sanitize_textarea_field($_POST['bemerkungen']),
+            ];
+            
+            if ($id) {
+                $this->model->update($id, $data);
+                
+                // Handle file uploads
+                if (!empty($_FILES['attachments']['name'][0])) {
+                    $files = $_FILES['attachments'];
+                    for ($i = 0; $i < count($files['name']); $i++) {
+                        if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                            $file = [
+                                'name' => $files['name'][$i],
+                                'type' => $files['type'][$i],
+                                'tmp_name' => $files['tmp_name'][$i],
+                                'error' => $files['error'][$i],
+                                'size' => $files['size'][$i]
+                            ];
+                            $this->attachment_model->upload($id, $file);
+                        }
+                    }
+                }
+                
+                echo '<div class="notice notice-success"><p>' . __('Aufgabe aktualisiert!', 'wp-project-todos') . '</p></div>';
+            } else {
+                $new_id = $this->model->create($data);
+                if (!is_wp_error($new_id)) {
+                    // Handle file uploads for new todo
+                    if (!empty($_FILES['attachments']['name'][0])) {
+                        $files = $_FILES['attachments'];
+                        for ($i = 0; $i < count($files['name']); $i++) {
+                            if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                                $file = [
+                                    'name' => $files['name'][$i],
+                                    'type' => $files['type'][$i],
+                                    'tmp_name' => $files['tmp_name'][$i],
+                                    'error' => $files['error'][$i],
+                                    'size' => $files['size'][$i]
+                                ];
+                                $this->attachment_model->upload($new_id, $file);
+                            }
+                        }
+                    }
+                    
+                    echo '<script>window.location.href = "' . admin_url('admin.php?page=wp-project-todos&message=created') . '";</script>';
+                    return;
+                }
+            }
+        }
+        
+        // Handle attachment deletion
+        if (isset($_GET['delete_attachment']) && isset($_GET['attachment_id'])) {
+            if (wp_verify_nonce($_GET['_wpnonce'], 'delete_attachment_' . $_GET['attachment_id'])) {
+                $this->attachment_model->delete($_GET['attachment_id']);
+                echo '<div class="notice notice-success"><p>' . __('Anhang gelöscht!', 'wp-project-todos') . '</p></div>';
+            }
+        }
+        
+        $id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+        $todo = $id ? $this->model->get_by_id($id) : null;
+        ?>
+        <div class="wrap">
+            <h1><?php echo $todo ? __('Aufgabe bearbeiten', 'wp-project-todos') : __('Neue Aufgabe', 'wp-project-todos'); ?></h1>
+            
+            <form method="post" action="" enctype="multipart/form-data">
+                <?php wp_nonce_field('wp_project_todos_edit', 'wp_project_todos_nonce'); ?>
+                
+                <table class="form-table">
+                    <tr>
+                        <th><label for="title"><?php _e('Titel', 'wp-project-todos'); ?></label></th>
+                        <td><input type="text" name="title" id="title" class="regular-text" value="<?php echo $todo ? esc_attr($todo->title) : ''; ?>" required /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="description"><?php _e('Beschreibung', 'wp-project-todos'); ?></label></th>
+                        <td><textarea name="description" id="description" rows="5" cols="50"><?php echo $todo ? esc_textarea($todo->description) : ''; ?></textarea></td>
+                    </tr>
+                    <tr>
+                        <th><label for="scope"><?php _e('Bereich', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <select name="scope" id="scope">
+                                <option value="frontend" <?php selected($todo ? $todo->scope : '', 'frontend'); ?>>Frontend</option>
+                                <option value="backend" <?php selected($todo ? $todo->scope : '', 'backend'); ?>>Backend</option>
+                                <option value="database" <?php selected($todo ? $todo->scope : '', 'database'); ?>>Database</option>
+                                <option value="n8n" <?php selected($todo ? $todo->scope : '', 'n8n'); ?>>n8n</option>
+                                <option value="mt5" <?php selected($todo ? $todo->scope : '', 'mt5'); ?>>MT5</option>
+                                <option value="server" <?php selected($todo ? $todo->scope : '', 'server'); ?>>Server</option>
+                                <option value="content" <?php selected($todo ? $todo->scope : '', 'content'); ?>>Content</option>
+                                <option value="seo" <?php selected($todo ? $todo->scope : '', 'seo'); ?>>SEO</option>
+                                <option value="analytics" <?php selected($todo ? $todo->scope : '', 'analytics'); ?>>Analytics</option>
+                                <option value="other" <?php selected($todo ? $todo->scope : '', 'other'); ?>>Other</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="status"><?php _e('Status', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <select name="status" id="status">
+                                <option value="pending" <?php selected($todo ? $todo->status : 'pending', 'pending'); ?>><?php _e('Ausstehend', 'wp-project-todos'); ?></option>
+                                <option value="in_progress" <?php selected($todo ? $todo->status : '', 'in_progress'); ?>><?php _e('In Bearbeitung', 'wp-project-todos'); ?></option>
+                                <option value="completed" <?php selected($todo ? $todo->status : '', 'completed'); ?>><?php _e('Abgeschlossen', 'wp-project-todos'); ?></option>
+                                <option value="blocked" <?php selected($todo ? $todo->status : '', 'blocked'); ?>><?php _e('Blockiert', 'wp-project-todos'); ?></option>
+                                <option value="cancelled" <?php selected($todo ? $todo->status : '', 'cancelled'); ?>><?php _e('Abgebrochen', 'wp-project-todos'); ?></option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="priority"><?php _e('Priorität', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <select name="priority" id="priority">
+                                <option value="low" <?php selected($todo ? $todo->priority : '', 'low'); ?>>Low</option>
+                                <option value="medium" <?php selected($todo ? $todo->priority : '', 'medium'); ?>>Medium</option>
+                                <option value="high" <?php selected($todo ? $todo->priority : '', 'high'); ?>>High</option>
+                                <option value="critical" <?php selected($todo ? $todo->priority : '', 'critical'); ?>>Critical</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="bearbeiten"><?php _e('Von Claude bearbeiten', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <input type="checkbox" name="bearbeiten" id="bearbeiten" value="1" <?php checked($todo ? $todo->bearbeiten : true, 1); ?> />
+                            <p class="description"><?php _e('Wenn aktiviert, wird Claude diese Aufgabe bearbeiten. Wenn nicht, wird sie übersprungen.', 'wp-project-todos'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="claude_mode"><?php _e('Claude Modus', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <select name="claude_mode" id="claude_mode">
+                                <option value="bypass" <?php selected($todo ? $todo->claude_mode : 'bypass', 'bypass'); ?>><?php _e('Bypass Permissions (Standard)', 'wp-project-todos'); ?></option>
+                                <option value="auto-accept" <?php selected($todo ? $todo->claude_mode : '', 'auto-accept'); ?>><?php _e('Auto-Accept', 'wp-project-todos'); ?></option>
+                                <option value="plan" <?php selected($todo ? $todo->claude_mode : '', 'plan'); ?>><?php _e('Plan Mode', 'wp-project-todos'); ?></option>
+                                <option value="normal" <?php selected($todo ? $todo->claude_mode : '', 'normal'); ?>><?php _e('Normal (mit Bestätigung)', 'wp-project-todos'); ?></option>
+                            </select>
+                            <p class="description"><?php _e('Steuert wie Claude mit Berechtigungen umgeht', 'wp-project-todos'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="working_directory"><?php _e('Arbeitsverzeichnis', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <?php
+                            global $wpdb;
+                            // Get last 5 unique working directories
+                            $recent_dirs = $wpdb->get_col(
+                                "SELECT DISTINCT working_directory 
+                                 FROM {$wpdb->prefix}project_todos 
+                                 WHERE working_directory IS NOT NULL AND working_directory != ''
+                                 ORDER BY id DESC 
+                                 LIMIT 10"
+                            );
+                            
+                            // Add default directories
+                            $default_dirs = [
+                                '/home/rodemkay/www/react/',
+                                '/home/rodemkay/www/react/wp-project-todos/',
+                                '/var/www/forexsignale/staging/',
+                                '/home/rodemkay/www/react/mounts/hetzner-staging/',
+                                '/home/rodemkay/www/react/development/'
+                            ];
+                            
+                            $all_dirs = array_unique(array_merge($recent_dirs, $default_dirs));
+                            $current_dir = $todo ? $todo->working_directory : '/home/rodemkay/www/react/';
+                            ?>
+                            <select name="working_directory_select" id="working_directory_select" onchange="document.getElementById('working_directory').value = this.value;" style="width: 100%; margin-bottom: 10px;">
+                                <option value="">-- Zuletzt verwendet / Standard --</option>
+                                <?php foreach (array_slice($all_dirs, 0, 8) as $dir): ?>
+                                    <option value="<?php echo esc_attr($dir); ?>" <?php selected($current_dir, $dir); ?>>
+                                        <?php echo esc_html($dir); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                                <option value="custom">-- Eigenes Verzeichnis eingeben --</option>
+                            </select>
+                            <input type="text" name="working_directory" id="working_directory" class="regular-text" 
+                                   value="<?php echo esc_attr($current_dir); ?>" 
+                                   placeholder="/home/rodemkay/www/react/" style="width: 100%;" />
+                            <p class="description"><?php _e('Verzeichnis, in das Claude automatisch wechseln soll', 'wp-project-todos'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="estimated_hours"><?php _e('Geschätzte Stunden', 'wp-project-todos'); ?></label></th>
+                        <td><input type="number" name="estimated_hours" id="estimated_hours" step="0.5" min="0" value="<?php echo $todo ? esc_attr($todo->estimated_hours) : ''; ?>" /></td>
+                    </tr>
+                    <tr>
+                        <th><label for="bemerkungen"><?php _e('Bemerkungen für Claude', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <textarea name="bemerkungen" id="bemerkungen" rows="15" cols="80" style="width: 100%; font-size: 14px; font-family: monospace;" placeholder="Claude schreibt hier seine Bemerkungen nach Abschluss..."><?php echo $todo ? esc_textarea($todo->bemerkungen) : ''; ?></textarea>
+                            <p class="description"><?php _e('Claude wird hier seine Bemerkungen nach Abschluss der Aufgabe eintragen.', 'wp-project-todos'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th><label for="attachments"><?php _e('Anhänge', 'wp-project-todos'); ?></label></th>
+                        <td>
+                            <div id="file-upload-container">
+                                <div class="file-input-wrapper">
+                                    <input type="file" name="attachments[]" class="attachment-input" />
+                                </div>
+                            </div>
+                            <button type="button" id="add-more-files" class="button" style="margin-top: 10px;">
+                                + <?php _e('Weitere Datei hinzufügen', 'wp-project-todos'); ?>
+                            </button>
+                            <p class="description"><?php _e('Screenshots, Dokumente oder andere Dateien (max. 10MB pro Datei). Erlaubte Formate: jpg, png, gif, pdf, doc, docx, xls, xlsx, txt, zip, csv, mp4, mov', 'wp-project-todos'); ?></p>
+                            
+                            <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                var addButton = document.getElementById('add-more-files');
+                                var container = document.getElementById('file-upload-container');
+                                var fileCount = 1;
+                                
+                                if (addButton) {
+                                    addButton.addEventListener('click', function() {
+                                        if (fileCount < 10) { // Max 10 Dateien
+                                            fileCount++;
+                                            var wrapper = document.createElement('div');
+                                            wrapper.className = 'file-input-wrapper';
+                                            wrapper.style.marginTop = '5px';
+                                            
+                                            var input = document.createElement('input');
+                                            input.type = 'file';
+                                            input.name = 'attachments[]';
+                                            input.className = 'attachment-input';
+                                            
+                                            var removeBtn = document.createElement('button');
+                                            removeBtn.type = 'button';
+                                            removeBtn.className = 'button';
+                                            removeBtn.style.marginLeft = '10px';
+                                            removeBtn.style.color = '#dc3545';
+                                            removeBtn.textContent = '✕';
+                                            removeBtn.onclick = function() {
+                                                wrapper.remove();
+                                                fileCount--;
+                                            };
+                                            
+                                            wrapper.appendChild(input);
+                                            wrapper.appendChild(removeBtn);
+                                            container.appendChild(wrapper);
+                                        } else {
+                                            alert('Maximal 10 Dateien gleichzeitig');
+                                        }
+                                    });
+                                }
+                            });
+                            </script>
+                            
+                            <?php if ($todo): 
+                                $attachments = $this->attachment_model->get_by_todo($todo->id);
+                                if (!empty($attachments)): ?>
+                                <div style="margin-top: 20px;">
+                                    <h4><?php _e('Vorhandene Anhänge:', 'wp-project-todos'); ?></h4>
+                                    <style>
+                                        .attachment-list { list-style: none; padding: 0; }
+                                        .attachment-list li { 
+                                            padding: 10px; 
+                                            background: #f5f5f5; 
+                                            margin-bottom: 10px; 
+                                            border-radius: 5px;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: space-between;
+                                        }
+                                        .attachment-preview {
+                                            max-width: 100px;
+                                            max-height: 100px;
+                                            margin-right: 15px;
+                                            border: 1px solid #ddd;
+                                            padding: 2px;
+                                            background: white;
+                                        }
+                                        .attachment-info {
+                                            flex-grow: 1;
+                                        }
+                                        .attachment-name {
+                                            font-weight: bold;
+                                            margin-bottom: 5px;
+                                        }
+                                        .attachment-meta {
+                                            color: #666;
+                                            font-size: 12px;
+                                        }
+                                        .delete-attachment {
+                                            color: #dc3545;
+                                            text-decoration: none;
+                                        }
+                                        .delete-attachment:hover {
+                                            color: #a02833;
+                                        }
+                                    </style>
+                                    <ul class="attachment-list">
+                                    <?php foreach ($attachments as $attachment): ?>
+                                        <li>
+                                            <?php if ($this->attachment_model->is_image($attachment)): ?>
+                                                <img src="<?php echo esc_url($this->attachment_model->get_url($attachment)); ?>" class="attachment-preview" />
+                                            <?php endif; ?>
+                                            <div class="attachment-info">
+                                                <div class="attachment-name">
+                                                    <a href="<?php echo esc_url($this->attachment_model->get_url($attachment)); ?>" target="_blank">
+                                                        <?php echo esc_html($attachment->file_name); ?>
+                                                    </a>
+                                                </div>
+                                                <div class="attachment-meta">
+                                                    <?php echo $this->attachment_model->format_size($attachment->file_size); ?> | 
+                                                    <?php echo esc_html($attachment->display_name); ?> | 
+                                                    <?php echo date_i18n(get_option('date_format') . ' ' . get_option('time_format'), strtotime($attachment->uploaded_at)); ?>
+                                                </div>
+                                            </div>
+                                            <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=wp-project-todos-new&id=' . $todo->id . '&delete_attachment=1&attachment_id=' . $attachment->id), 'delete_attachment_' . $attachment->id); ?>" 
+                                               class="delete-attachment" 
+                                               onclick="return confirm('<?php _e('Anhang wirklich löschen?', 'wp-project-todos'); ?>');">
+                                                <?php _e('Löschen', 'wp-project-todos'); ?>
+                                            </a>
+                                        </li>
+                                    <?php endforeach; ?>
+                                    </ul>
+                                </div>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                </table>
+            
+            <?php do_action("wp_project_todos_after_list"); ?>
+                
+                <p class="submit">
+                    <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e('Speichern', 'wp-project-todos'); ?>" />
+                </p>
+            </form>
+        </div>
+        <?php
+    }
+    
+    public function render_claude_output_page() {
+        if (!isset($_GET['todo_id'])) {
+            wp_die('Todo ID fehlt');
+        }
+        
+        $todo = $this->model->get_by_id($_GET['todo_id']);
+        if (!$todo) {
+            wp_die('Todo nicht gefunden');
+        }
+        
+        ?>
+        <div class="wrap">
+            <h1><?php echo esc_html($todo->title); ?> - Claude Output</h1>
+            
+            <div class="claude-output-meta">
+                <p><strong>Status:</strong> <?php echo esc_html($todo->status); ?></p>
+                <p><strong>Arbeitsverzeichnis:</strong> <code><?php echo esc_html($todo->working_directory); ?></code></p>
+                <?php if ($todo->started_at): ?>
+                <p><strong>Gestartet:</strong> <?php echo esc_html($todo->started_at); ?></p>
+                <?php endif; ?>
+                <?php if ($todo->completed_at): ?>
+                <p><strong>Abgeschlossen:</strong> <?php echo esc_html($todo->completed_at); ?></p>
+                <?php endif; ?>
+            </div>
+            
+            <h2>Claude Notizen</h2>
+            <div class="claude-output-viewer" style="background: #f5f5f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <?php if (!empty($todo->claude_notes)): ?>
+                    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: monospace;"><?php echo esc_html($todo->claude_notes); ?></pre>
+                <?php else: ?>
+                    <p style="color: #999;">Noch keine Notizen von Claude.</p>
+                <?php endif; ?>
+            </div>
+            
+            <?php if (!empty($todo->bemerkungen)): ?>
+            <h2>Abschluss-Bemerkungen</h2>
+            <div class="claude-bemerkungen" style="background: #e8f5e9; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: monospace;"><?php echo esc_html($todo->bemerkungen); ?></pre>
+            </div>
+            <?php endif; ?>
+            
+            <?php if ($todo->comments): ?>
+            <h2>Kommentare</h2>
+            <div class="todo-comments">
+                <?php 
+                $comments = json_decode($todo->comments ?: '[]', true);
+                foreach ($comments as $comment): ?>
+                <div class="todo-comment">
+                    <strong><?php echo esc_html($comment['timestamp']); ?>:</strong>
+                    <?php echo esc_html($comment['message']); ?>
+                </div>
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+            
+            <p><a href="<?php echo admin_url('admin.php?page=wp-project-todos'); ?>" class="button">Zurück zur Liste</a></p>
+        </div>
+        <?php
+    }
+    
+    public function display_admin_notices() {
+        // Display any admin notices
+    }
+}

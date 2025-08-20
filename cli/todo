@@ -1,0 +1,181 @@
+#!/bin/bash
+# TODO CLI - Main entry point for todo management
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+TODO_DIR="/home/rodemkay/www/react/todo"
+PLUGIN_DIR="/var/www/forexsignale/staging/wp-content/plugins/wp-project-todos"
+DB_NAME="staging_forexsignale"
+DB_PREFIX="stage_"
+DB_USER="ForexSignale"
+DB_PASS="@C3e!S5t#Q7p*V8g"
+
+# SSH Configuration for remote execution
+SSH_HOST="rodemkay@159.69.157.54"
+REMOTE_PATH="/var/www/forexsignale/staging"
+
+# Function to execute remote WP-CLI commands
+remote_wp() {
+    ssh $SSH_HOST "cd $REMOTE_PATH && wp $*"
+}
+
+# Function to get next todo
+get_next_todo() {
+    echo -e "${BLUE}Loading next todo...${NC}"
+    local result=$(remote_wp db query "SELECT id, title, description FROM ${DB_PREFIX}project_todos WHERE status='offen' AND bearbeiten=1 ORDER BY priority DESC, id ASC LIMIT 1" --format=json 2>/dev/null)
+    
+    if [ ! -z "$result" ] && [ "$result" != "[]" ]; then
+        echo "$result" | jq -r '.[0] | "ID: \(.id)\nTitle: \(.title)\nDescription: \(.description)"'
+        
+        # Update status to in_progress
+        local todo_id=$(echo "$result" | jq -r '.[0].id')
+        remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='in_progress' WHERE id=$todo_id"
+        
+        # Store current todo ID
+        echo "$todo_id" > /tmp/CURRENT_TODO_ID
+        
+        return 0
+    else
+        echo -e "${YELLOW}No open todos with bearbeiten=1 found.${NC}"
+        return 1
+    fi
+}
+
+# Function to get specific todo by ID
+get_todo_by_id() {
+    local todo_id=$1
+    echo -e "${BLUE}Loading todo #$todo_id...${NC}"
+    
+    local result=$(remote_wp db query "SELECT id, title, description, status, bearbeiten FROM ${DB_PREFIX}project_todos WHERE id=$todo_id" --format=json 2>/dev/null)
+    
+    if [ ! -z "$result" ] && [ "$result" != "[]" ]; then
+        echo "$result" | jq -r '.[0] | "ID: \(.id)\nTitle: \(.title)\nDescription: \(.description)\nStatus: \(.status)\nBearbeiten: \(.bearbeiten)"'
+        
+        # Update status to in_progress if it's offen
+        local current_status=$(echo "$result" | jq -r '.[0].status')
+        if [ "$current_status" = "offen" ]; then
+            remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='in_progress' WHERE id=$todo_id"
+        fi
+        
+        # Store current todo ID
+        echo "$todo_id" > /tmp/CURRENT_TODO_ID
+        
+        return 0
+    else
+        echo -e "${RED}Todo #$todo_id not found.${NC}"
+        return 1
+    fi
+}
+
+# Function to complete current todo
+complete_todo() {
+    if [ ! -f /tmp/CURRENT_TODO_ID ]; then
+        echo -e "${RED}No active todo to complete.${NC}"
+        return 1
+    fi
+    
+    local todo_id=$(cat /tmp/CURRENT_TODO_ID)
+    echo -e "${GREEN}Completing todo #$todo_id...${NC}"
+    
+    # Update status to completed
+    remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='completed', completed_at=NOW() WHERE id=$todo_id"
+    
+    # Remove current todo file
+    rm -f /tmp/CURRENT_TODO_ID
+    
+    # Signal task completed
+    echo "TASK_COMPLETED" > /tmp/TASK_COMPLETED
+    
+    echo -e "${GREEN}Todo #$todo_id completed!${NC}"
+    
+    # Auto-load next todo
+    get_next_todo
+}
+
+# Function to show help
+show_help() {
+    cat << EOF
+${BLUE}TODO CLI - Task Management System${NC}
+
+Usage: ./todo [command] [options]
+
+Commands:
+  ${GREEN}(no command)${NC}     Load next open todo with bearbeiten=1
+  ${GREEN}-id <ID>${NC}         Load specific todo by ID
+  ${GREEN}complete${NC}         Mark current todo as completed
+  ${GREEN}list${NC}            Show all todos
+  ${GREEN}status${NC}          Show current todo status
+  ${GREEN}help${NC}            Show this help message
+
+Examples:
+  ./todo              # Load next todo
+  ./todo -id 67       # Load todo #67
+  ./todo complete     # Complete current todo
+  ./todo list         # List all todos
+
+Configuration:
+  Database: $DB_NAME
+  Prefix: $DB_PREFIX
+  Remote: $SSH_HOST
+EOF
+}
+
+# Function to list todos
+list_todos() {
+    echo -e "${BLUE}Listing todos...${NC}"
+    remote_wp db query "SELECT id, title, status, priority, bearbeiten FROM ${DB_PREFIX}project_todos WHERE status != 'completed' ORDER BY priority DESC, id ASC" --format=table
+}
+
+# Function to show status
+show_status() {
+    if [ -f /tmp/CURRENT_TODO_ID ]; then
+        local todo_id=$(cat /tmp/CURRENT_TODO_ID)
+        echo -e "${BLUE}Current todo: #$todo_id${NC}"
+        get_todo_by_id $todo_id
+    else
+        echo -e "${YELLOW}No active todo.${NC}"
+    fi
+}
+
+# Main script logic
+case "$1" in
+    "")
+        # No argument - get next todo
+        get_next_todo
+        ;;
+    "-id")
+        # Get specific todo by ID
+        if [ -z "$2" ]; then
+            echo -e "${RED}Error: Please provide a todo ID${NC}"
+            exit 1
+        fi
+        get_todo_by_id $2
+        ;;
+    "complete")
+        # Complete current todo
+        complete_todo
+        ;;
+    "list")
+        # List all todos
+        list_todos
+        ;;
+    "status")
+        # Show current status
+        show_status
+        ;;
+    "help"|"-h"|"--help")
+        # Show help
+        show_help
+        ;;
+    *)
+        echo -e "${RED}Unknown command: $1${NC}"
+        show_help
+        exit 1
+        ;;
+esac

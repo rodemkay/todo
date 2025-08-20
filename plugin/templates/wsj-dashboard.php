@@ -1,0 +1,969 @@
+<?php
+/**
+ * WSJ-Style Dashboard Template
+ * 6-Column Layout
+ */
+
+// Handle actions before getting data
+if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])) {
+    if (wp_verify_nonce($_GET['_wpnonce'], 'delete_todo_' . $_GET['id'])) {
+        global $wpdb;
+        $wpdb->delete($wpdb->prefix . 'project_todos', ['id' => $_GET['id']]);
+        echo '<div class="notice notice-success"><p>Aufgabe gelöscht!</p></div>';
+    }
+}
+
+// Handle status update
+if (isset($_POST['update_status']) && isset($_POST['todo_id']) && isset($_POST['new_status'])) {
+    if (wp_verify_nonce($_POST['_wpnonce'], 'update_status_' . $_POST['todo_id'])) {
+        global $wpdb;
+        $wpdb->update(
+            $wpdb->prefix . 'project_todos',
+            ['status' => $_POST['new_status']],
+            ['id' => $_POST['todo_id']]
+        );
+        echo '<div class="notice notice-success"><p>Status aktualisiert!</p></div>';
+    }
+}
+
+// Handle bearbeiten toggle
+if (isset($_POST['toggle_bearbeiten']) && isset($_POST['todo_id'])) {
+    if (wp_verify_nonce($_POST['_wpnonce'], 'toggle_bearbeiten_' . $_POST['todo_id'])) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'project_todos';
+        $todo = $wpdb->get_row($wpdb->prepare("SELECT bearbeiten FROM $table WHERE id = %d", $_POST['todo_id']));
+        if ($todo) {
+            $new_value = $todo->bearbeiten ? 0 : 1;
+            $wpdb->update($table, ['bearbeiten' => $new_value], ['id' => $_POST['todo_id']]);
+            echo '<div class="notice notice-success"><p>' . 
+                 ($new_value ? 'Aufgabe wird nun von Claude bearbeitet' : 'Aufgabe wird von Claude übersprungen') . 
+                 '</p></div>';
+        }
+    }
+}
+
+// Handle Bulk Actions
+if (isset($_POST['bulk_action']) && isset($_POST['todo_ids'])) {
+    if (wp_verify_nonce($_POST['_wpnonce'], 'bulk_action_todos')) {
+        $action = $_POST['bulk_action'];
+        $todo_ids = array_map('intval', $_POST['todo_ids']);
+        global $wpdb;
+        $table = $wpdb->prefix . 'project_todos';
+        
+        switch($action) {
+            case 'delete':
+                foreach($todo_ids as $id) {
+                    $wpdb->delete($table, ['id' => $id]);
+                }
+                echo '<div class="notice notice-success"><p>' . count($todo_ids) . ' Aufgaben gelöscht!</p></div>';
+                break;
+            case 'status_offen':
+            case 'status_in_progress':
+            case 'status_completed':
+            case 'status_blocked':
+                $new_status = str_replace('status_', '', $action);
+                foreach($todo_ids as $id) {
+                    $wpdb->update($table, ['status' => $new_status], ['id' => $id]);
+                }
+                echo '<div class="notice notice-success"><p>Status für ' . count($todo_ids) . ' Aufgaben aktualisiert!</p></div>';
+                break;
+            case 'toggle_claude':
+                foreach($todo_ids as $id) {
+                    $todo = $wpdb->get_row($wpdb->prepare("SELECT bearbeiten FROM $table WHERE id = %d", $id));
+                    if ($todo) {
+                        $wpdb->update($table, ['bearbeiten' => $todo->bearbeiten ? 0 : 1], ['id' => $id]);
+                    }
+                }
+                echo '<div class="notice notice-success"><p>Claude-Status für ' . count($todo_ids) . ' Aufgaben umgeschaltet!</p></div>';
+                break;
+        }
+    }
+}
+
+// Get todos
+global $wpdb;
+$table = $wpdb->prefix . 'project_todos';
+$filter_status = isset($_GET['filter_status']) ? $_GET['filter_status'] : 'offen';
+
+if ($filter_status === 'all') {
+    $todos = $wpdb->get_results("SELECT * FROM $table ORDER BY COALESCE(completed_date, created_at) DESC");
+} else {
+    $todos = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table WHERE status = %s ORDER BY COALESCE(completed_date, created_at) DESC",
+        $filter_status
+    ));
+}
+?>
+
+<div class="wsj-dashboard-container">
+    <!-- Header -->
+    <div class="wsj-dashboard-header">
+        <h1 class="wsj-dashboard-title">Project To-Dos Dashboard</h1>
+        <a href="<?php echo admin_url('admin.php?page=wp-project-todos-new'); ?>" class="button button-primary">
+            ➕ Neue Aufgabe
+        </a>
+    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+
+    <!-- Project Selector Bar -->
+    <?php
+    // Get all unique projects/scopes with counts
+    $project_counts = $wpdb->get_results("
+        SELECT scope, COUNT(*) as count, 
+               SUM(CASE WHEN status = 'offen' THEN 1 ELSE 0 END) as open_count,
+               SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as progress_count,
+               SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_count
+        FROM $table 
+        GROUP BY scope
+        ORDER BY scope
+    ");
+    
+    $filter_scope = isset($_GET['filter_scope']) ? sanitize_text_field($_GET['filter_scope']) : 'all';
+    
+    // Filter todos by scope if needed
+    if ($filter_scope !== 'all' && $filter_scope !== '') {
+        if ($filter_status === 'all') {
+            $todos = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $table WHERE scope = %s ORDER BY COALESCE(completed_date, created_at) DESC",
+                $filter_scope
+            ));
+        } else {
+            $todos = $wpdb->get_results($wpdb->prepare(
+                "SELECT * FROM $table WHERE status = %s AND scope = %s ORDER BY COALESCE(completed_date, created_at) DESC",
+                $filter_status, $filter_scope
+            ));
+        }
+    }
+    ?>
+    
+    <div class="wsj-project-selector" style="background: #f9fafb; padding: 15px; border: 1px solid #e5e7eb; margin-bottom: 15px; border-radius: 5px;">
+        <div style="display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
+            <strong style="color: #374151;">Projekt:</strong>
+            <select id="project-selector" onchange="filterByProject(this.value)" style="padding: 6px 12px; border: 1px solid #d1d5db; border-radius: 4px; background: white;">
+                <option value="all">📁 Alle Projekte (<?php 
+                    $total = 0;
+                    foreach($project_counts as $p) $total += $p->count;
+                    echo $total;
+                ?>)</option>
+                <?php foreach($project_counts as $project): ?>
+                    <option value="<?php echo esc_attr($project->scope); ?>" <?php selected($filter_scope, $project->scope); ?>>
+                        <?php 
+                        $icon = '';
+                        switch($project->scope) {
+                            case 'frontend': $icon = '🎨'; break;
+                            case 'backend': $icon = '⚙️'; break;
+                            case 'n8n': $icon = '🔄'; break;
+                            case 'mt5': $icon = '📈'; break;
+                            default: $icon = '📂';
+                        }
+                        echo $icon . ' ' . ucfirst($project->scope) . ' (' . $project->count . ')';
+                        ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            
+            <!-- Project Stats -->
+            <?php if ($filter_scope !== 'all' && $filter_scope !== ''): 
+                $current_project = null;
+                foreach($project_counts as $p) {
+                    if ($p->scope === $filter_scope) {
+                        $current_project = $p;
+                        break;
+                    }
+                }
+                if ($current_project):
+            ?>
+            <div style="display: flex; gap: 15px; margin-left: auto; font-size: 13px;">
+                <span style="color: #059669;">✅ Fertig: <?php echo $current_project->completed_count; ?></span>
+                <span style="color: #2563eb;">🔄 In Arbeit: <?php echo $current_project->progress_count; ?></span>
+                <span style="color: #dc2626;">⏳ Offen: <?php echo $current_project->open_count; ?></span>
+            </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+            <?php endif; endif; ?>
+        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+    
+    <!-- Filter & Bulk Actions Bar -->
+    <div class="wsj-filter-bar">
+        <div class="wsj-status-filters">
+            <?php 
+            $scope_param = $filter_scope !== 'all' ? '&filter_scope=' . urlencode($filter_scope) : '';
+            ?>
+            <a href="?page=wp-project-todos&filter_status=all<?php echo $scope_param; ?>" class="wsj-filter-btn <?php echo $filter_status === 'all' ? 'active' : ''; ?>">Alle</a>
+            <a href="?page=wp-project-todos&filter_status=offen<?php echo $scope_param; ?>" class="wsj-filter-btn <?php echo $filter_status === 'offen' ? 'active' : ''; ?>">Offen</a>
+            <a href="?page=wp-project-todos&filter_status=in_progress<?php echo $scope_param; ?>" class="wsj-filter-btn <?php echo $filter_status === 'in_progress' ? 'active' : ''; ?>">In Bearbeitung</a>
+            <a href="?page=wp-project-todos&filter_status=completed<?php echo $scope_param; ?>" class="wsj-filter-btn <?php echo $filter_status === 'completed' ? 'active' : ''; ?>">Abgeschlossen</a>
+            <a href="?page=wp-project-todos&filter_status=blocked<?php echo $scope_param; ?>" class="wsj-filter-btn <?php echo $filter_status === 'blocked' ? 'active' : ''; ?>">Blockiert</a>
+            <a href="?page=wp-project-todos&filter_status=cron<?php echo $scope_param; ?>" class="wsj-filter-btn <?php echo $filter_status === 'cron' ? 'active' : '' ?>" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">⏰ CRON (<?php echo $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE is_recurring = 1"); ?>)</a>
+            <button onclick="toggleSelectedClaude()" class="wsj-filter-btn" style="background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%); color: white; border: none; cursor: pointer;">🤖 Claude Toggle</button>
+        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+        
+        <div class="wsj-bulk-actions">
+            <span id="selected-count" style="margin-right: 10px; color: #6b7280;"></span>
+            <form method="post" id="bulk-action-form" style="display: inline-flex; gap: 10px;">
+                <?php wp_nonce_field('bulk_action_todos'); ?>
+                <select name="bulk_action" id="bulk_action" class="wsj-bulk-select">
+                    <option value="">Bulk-Aktion...</option>
+                    <optgroup label="Status ändern">
+                        <option value="status_offen">Auf Offen setzen</option>
+                        <option value="status_in_progress">In Bearbeitung</option>
+                        <option value="status_completed">Abgeschlossen</option>
+                        <option value="status_blocked">Blockiert</option>
+                    </optgroup>
+                    <optgroup label="Andere">
+                        <option value="toggle_claude">Claude Toggle</option>
+                        <option value="delete">Löschen</option>
+                    </optgroup>
+                </select>
+                <button type="submit" class="wsj-bulk-btn" onclick="return confirmBulkAction()">Ausführen</button>
+            </form>
+        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+
+    <!-- 6-Column Table -->
+    <table class="wsj-todos-table">
+        <thead>
+            <tr>
+                <th class="wsj-col-1">
+                    <input type="checkbox" id="select-all" />
+                    <br><small>ID / Bereich</small>
+                </th>
+                <th class="wsj-col-2">Titel / Beschreibung</th>
+                <th class="wsj-col-3">Status / Priorität</th>
+                <th class="wsj-col-4">Claude / Anhänge</th>
+                <th class="wsj-col-5">Erstellt / Geändert</th>
+                <th class="wsj-col-6">Verzeichnis / Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($todos as $todo) : ?>
+            <tr>
+                <!-- Column 1: Checkbox/ID/Bereich -->
+                <td class="wsj-col-1">
+                    <div class="wsj-col-checkbox">
+                        <input type="checkbox" name="todo_ids[]" value="<?php echo $todo->id; ?>" class="todo-checkbox" form="bulk-action-form" />
+                        <span class="wsj-todo-id">#<?php echo $todo->id; ?></span>
+                        <span class="wsj-todo-scope wsj-scope-<?php echo esc_attr($todo->scope); ?>">
+                            <?php echo esc_html($todo->scope); ?>
+                        </span>
+                    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                </td>
+
+                <!-- Column 2: Titel/Beschreibung -->
+                <td class="wsj-col-2">
+                    <a href="<?php echo admin_url('admin.php?page=wp-project-todos-new&id=' . $todo->id); ?>" 
+                       class="wsj-todo-title">
+                        <?php echo esc_html($todo->title); ?>
+                    </a>
+                    <div class="wsj-todo-description">
+                        <?php 
+                        $desc = strip_tags($todo->description);
+                        $words = explode(' ', $desc);
+                        $preview = implode(' ', array_slice($words, 0, 20));
+                        echo esc_html($preview);
+                        if (count($words) > 20) echo '...';
+                        ?>
+                    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                </td>
+
+                <!-- Column 3: Status/Priorität -->
+                <td class="wsj-col-3">
+                    <form method="post" style="display: inline;">
+                        <?php wp_nonce_field('update_status_' . $todo->id); ?>
+                        <input type="hidden" name="todo_id" value="<?php echo $todo->id; ?>" />
+                        <select name="new_status" class="wsj-status-select" onchange="this.form.submit()">
+                            <option value="offen" <?php selected($todo->status, 'offen'); ?>>Offen</option>
+                            <option value="in_progress" <?php selected($todo->status, 'in_progress'); ?>>In Bearbeitung</option>
+                            <option value="completed" <?php selected($todo->status, 'completed'); ?>>Abgeschlossen</option>
+                            <option value="blocked" <?php selected($todo->status, 'blocked'); ?>>Blockiert</option>
+                        </select>
+                        <input type="hidden" name="update_status" value="1" />
+                    </form>
+                    <div class="wsj-priority wsj-priority-<?php echo esc_attr($todo->priority); ?>">
+                        <?php echo ucfirst(esc_html($todo->priority)); ?>
+                    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                </td>
+
+                <!-- Column 4: Claude/Anhänge -->
+                <td class="wsj-col-4">
+                    <form method="post" style="display: inline;">
+                        <?php wp_nonce_field('toggle_bearbeiten_' . $todo->id); ?>
+                        <input type="hidden" name="todo_id" value="<?php echo $todo->id; ?>" />
+                        <div class="wsj-claude-toggle">
+                            <input type="checkbox" 
+                                   name="toggle_bearbeiten" 
+                                   value="1" 
+                                   class="wsj-claude-checkbox"
+                                   <?php checked($todo->bearbeiten, 1); ?> 
+                                   onchange="this.form.submit()" />
+                            <label>Claude</label>
+                        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                    </form>
+                    <div class="wsj-attachments">
+                        <?php
+                        global $wpdb;
+                        $attachments = $wpdb->get_var($wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$wpdb->prefix}project_todo_attachments WHERE todo_id = %d",
+                            $todo->id
+                        ));
+                        ?>
+                        <span class="wsj-attachment-count">📎 <?php echo $attachments; ?> Anhänge</span>
+                    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                </td>
+
+                <!-- Column 5: Timestamps -->
+                <td class="wsj-col-5">
+                    <div class="wsj-timestamps">
+                        <div>
+                            <span class="wsj-timestamp-label">Erstellt:</span><br>
+                            <?php echo date('d.m.Y H:i', strtotime($todo->created_at)); ?>
+                        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                        <?php if ($todo->completed_date) : ?>
+                        <div style="margin-top: 5px;">
+                            <span class="wsj-timestamp-label">Geändert:</span><br>
+                            <?php echo date('d.m.Y H:i', strtotime($todo->completed_date)); ?>
+                        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                        <?php endif; ?>
+                    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                </td>
+
+                <!-- Column 6: Verzeichnis/Aktionen -->
+                <td class="wsj-col-6">
+                    <div class="wsj-working-dir">
+                        <?php echo esc_html($todo->working_directory ?: '/home/rodemkay/www/react/'); ?>
+                    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                    <div class="wsj-action-buttons">
+                        <!-- First Row -->
+                        <button class="wsj-action-btn send-single-todo" data-todo-id="<?php echo $todo->id; ?>">
+                            📤 An Claude
+                        </button>
+                        <a href="<?php echo admin_url('admin.php?page=wp-project-todos-new&id=' . $todo->id); ?>" 
+                           class="wsj-action-btn">
+                            ✏️ Edit
+                        </a>
+                        <button class="wsj-action-btn" onclick="openContinueModal(<?php echo $todo->id; ?>)">
+                            🔄 Wiedervorlage
+                        </button>
+                        
+                        <!-- Second Row -->
+                        <a href="<?php echo admin_url('admin.php?page=wp-project-todos-html&todo_id=' . $todo->id); ?>" 
+                           class="wsj-action-btn" target="_blank">
+                            📄 HTML
+                        </a>
+                        <a href="<?php echo admin_url('admin.php?page=wp-project-todos-claude&todo_id=' . $todo->id); ?>" 
+                           class="wsj-action-btn" target="_blank">
+                            📊 Output
+                        </a>
+                        <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=wp-project-todos&action=delete&id=' . $todo->id), 'delete_todo_' . $todo->id); ?>" 
+                           class="wsj-action-btn danger" 
+                           onclick="return confirm('Wirklich löschen?')">
+                            🗑️ Löschen
+                        </a>
+                    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+                </td>
+            </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <!-- Webhook Control Bar -->
+    <div class="wsj-webhook-bar">
+        <div class="wsj-webhook-status" style="display: flex; gap: 20px; align-items: center;">
+            <!-- Webhook Server Status -->
+            <div>
+                <span class="wsj-status-indicator <?php echo get_option('webhook_server_running') ? 'online' : ''; ?>"></span>
+                <span>Webhook: <strong><?php echo get_option('webhook_server_running') ? 'Online' : 'Offline'; ?></strong></span>
+            </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+            
+            <!-- Web Server Status -->
+            <div id="webserver-status">
+                <span class="wsj-status-indicator" id="webserver-indicator"></span>
+                <span>Webserver: <strong id="webserver-text">Prüfe...</strong></span>
+            </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+        
+        <div style="display: flex; gap: 10px;">
+            <a href="<?php echo admin_url('admin.php?page=wp-project-todos-new'); ?>" class="wsj-loop-btn" style="background: #10b981; text-decoration: none;">
+                ➕ Neue Aufgabe
+            </a>
+            <button class="wsj-loop-btn" onclick="startTodoLoop()">
+                🔄 ./todo Loop starten
+            </button>
+        </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+    </div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+</div>
+<script>
+function toggleSelectedClaude() {
+    var todoIds = [];
+    jQuery('input[name="todo_ids[]"]:checked').each(function() {
+        todoIds.push(jQuery(this).val());
+    });
+    
+    if (todoIds.length === 0) {
+        alert("Bitte wählen Sie mindestens eine Aufgabe aus.");
+        return;
+    }
+    
+    if (confirm("Claude-Status für " + todoIds.length + " Aufgabe(n) umschalten?")) {
+        // Set the bulk action to toggle_claude
+        jQuery('#bulk-action-form select[name="bulk_action"]').val("toggle_claude");
+        jQuery('#bulk-action-form').submit();
+    }
+}
+</script>
+
+<script>
+jQuery(document).ready(function($) {
+    // Check webserver status
+    function checkWebserverStatus() {
+        $.ajax({
+            url: '<?php echo home_url('/'); ?>',
+            type: 'HEAD',
+            timeout: 5000,
+            success: function() {
+                $('#webserver-indicator').css('background', '#10b981').addClass('online');
+                $('#webserver-text').text('Online');
+            },
+            error: function() {
+                $('#webserver-indicator').css('background', '#dc2626').removeClass('online');
+                $('#webserver-text').text('Offline');
+            }
+        });
+    }
+    
+    // Check on load and every 30 seconds
+    checkWebserverStatus();
+    setInterval(checkWebserverStatus, 30000);
+    
+    // Select all checkbox
+    $('#select-all').on('change', function() {
+        $('.todo-checkbox').prop('checked', $(this).prop('checked'));
+        updateSelectedCount();
+    });
+    
+    // Update count
+    $('.todo-checkbox').on('change', updateSelectedCount);
+    
+    function updateSelectedCount() {
+        const count = $('.todo-checkbox:checked').length;
+        $('#selected-count').text(count > 0 ? count + ' ausgewählt' : '');
+    }
+    
+    // An Claude single todo
+    $('.send-single-todo').on('click', function() {
+        const todoId = $(this).data('todo-id');
+        const $button = $(this);
+        
+        $button.prop('disabled', true).text('📡 Sende...');
+        
+        $.ajax({
+            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+            type: 'POST',
+            data: {
+                action: 'send_specific_todo_to_claude',
+                todo_id: todoId,
+                nonce: '<?php echo wp_create_nonce('send_todo_to_claude'); ?>'
+            },
+            success: function(response) {
+                $button.text(response.success ? '✅ Gesendet!' : '❌ Fehler');
+                setTimeout(() => {
+                    $button.prop('disabled', false).text('📤 An Claude');
+                }, 2000);
+            },
+            error: function() {
+                $button.prop('disabled', false).text('❌ Fehler');
+                setTimeout(() => $button.text('📤 An Claude'), 2000);
+            }
+        });
+    });
+});
+
+function confirmBulkAction() {
+    const action = document.getElementById('bulk_action').value;
+    const checkedCount = document.querySelectorAll('.todo-checkbox:checked').length;
+    
+    if (!action) {
+        alert('Bitte wähle eine Aktion aus!');
+        return false;
+    }
+    
+    if (checkedCount === 0) {
+        alert('Bitte wähle mindestens eine Aufgabe aus!');
+        return false;
+    }
+    
+    if (action === 'delete') {
+        return confirm('Wirklich ' + checkedCount + ' Aufgabe(n) löschen?');
+    }
+    
+    return true;
+}
+
+function openContinueModal(todoId) {
+    window.location.href = '<?php echo admin_url('admin.php?page=wp-project-todos-new&id='); ?>' + todoId + '&action=continue';
+}
+
+function startTodoLoop() {
+    if (confirm('./todo Loop starten und alle offenen Todos an Claude senden?')) {
+        // AJAX call to start the todo loop via webhook
+        jQuery.ajax({
+            url: '<?php echo admin_url('admin-ajax.php'); ?>',
+            type: 'POST',
+            data: {
+                action: 'start_todo_loop',
+                nonce: '<?php echo wp_create_nonce('start_todo_loop'); ?>'
+            },
+            beforeSend: function() {
+                jQuery('.wsj-loop-btn').prop('disabled', true).text('🔄 Starte Loop...');
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('✅ Todo Loop gestartet!\n\nClaude arbeitet jetzt alle offenen Todos ab.\nÜberprüfe die tmux session "claude" für Details.');
+                    jQuery('.wsj-loop-btn').prop('disabled', false).text('🔄 ./todo Loop starten');
+                } else {
+                    alert('❌ Fehler beim Starten des Loops:\n' + (response.data || 'Unbekannter Fehler'));
+                    jQuery('.wsj-loop-btn').prop('disabled', false).text('🔄 ./todo Loop starten');
+                }
+            },
+            error: function() {
+                alert('❌ Verbindungsfehler zum Server');
+                jQuery('.wsj-loop-btn').prop('disabled', false).text('🔄 ./todo Loop starten');
+            }
+        });
+    }
+}
+
+function filterByProject(scope) {
+    const currentUrl = new URL(window.location.href);
+    const params = new URLSearchParams(currentUrl.search);
+    
+    if (scope === 'all') {
+        params.delete('filter_scope');
+    } else {
+        params.set('filter_scope', scope);
+    }
+    
+    // Keep current status filter
+    if (!params.has('filter_status')) {
+        params.set('filter_status', 'offen');
+    }
+    
+    window.location.href = currentUrl.pathname + '?' + params.toString();
+}
+</script>

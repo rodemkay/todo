@@ -1,0 +1,878 @@
+/**
+ * WP Project Todos - WSJ Admin Styles
+ * Version: 1.0
+ * Description: Wall Street Journal Style für WordPress Admin Pages
+ */
+
+/* ===========================
+   WSJ CSS VARIABLES SYSTEM
+   =========================== */
+:root {
+    /* WSJ Primary Colors */
+    --wsj-primary: #2d3748;
+    --wsj-secondary: #4a5568;
+    --wsj-accent: #4A90E2;
+    --wsj-accent-hover: #357ABD;
+    
+    /* WSJ Background Colors */
+    --wsj-bg-white: #ffffff;
+    --wsj-bg-light: #f7fafc;
+    --wsj-bg-gray: #edf2f7;
+    --wsj-bg-dark: #2d3748;
+    
+    /* WSJ Text Colors */
+    --wsj-text-primary: #2d3748;
+    --wsj-text-secondary: #4a5568;
+    --wsj-text-muted: #718096;
+    --wsj-text-white: #ffffff;
+    
+    /* WSJ Border Colors */
+    --wsj-border-light: #e2e8f0;
+    --wsj-border-medium: #cbd5e0;
+    --wsj-border-dark: #a0aec0;
+    
+    /* WSJ Status Colors */
+    --wsj-success: #48bb78;
+    --wsj-warning: #ed8936;
+    --wsj-danger: #f56565;
+    --wsj-info: #4299e1;
+    
+    /* WSJ Typography */
+    --wsj-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --wsj-font-size-xs: 12px;
+    --wsj-font-size-sm: 14px;
+    --wsj-font-size-base: 16px;
+    --wsj-font-size-lg: 18px;
+    --wsj-font-size-xl: 20px;
+    
+    /* WSJ Spacing */
+    --wsj-spacing-xs: 4px;
+    --wsj-spacing-sm: 8px;
+    --wsj-spacing-md: 16px;
+    --wsj-spacing-lg: 24px;
+    --wsj-spacing-xl: 32px;
+    
+    /* WSJ Shadows */
+    --wsj-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+    --wsj-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --wsj-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+    
+    /* WSJ Border Radius */
+    --wsj-radius-sm: 4px;
+    --wsj-radius-md: 6px;
+    --wsj-radius-lg: 8px;
+}
+
+/* ===========================
+   GLOBAL WSJ ADMIN STYLES
+   =========================== */
+.wsj-admin-page {
+    font-family: var(--wsj-font-family);
+    color: var(--wsj-text-primary);
+    background-color: var(--wsj-bg-light);
+    line-height: 1.6;
+}
+
+.wsj-admin-header {
+    background: var(--wsj-bg-white);
+    border-bottom: 2px solid var(--wsj-border-medium);
+    padding: var(--wsj-spacing-lg) 0;
+    margin-bottom: var(--wsj-spacing-xl);
+}
+
+.wsj-admin-title {
+    font-size: var(--wsj-font-size-xl);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--wsj-text-primary);
+    margin: 0;
+    text-align: center;
+}
+
+.wsj-admin-subtitle {
+    font-size: var(--wsj-font-size-sm);
+    color: var(--wsj-text-muted);
+    text-align: center;
+    margin-top: var(--wsj-spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ===========================
+   WSJ BUTTON GROUPS
+   =========================== */
+.wsj-button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wsj-spacing-sm);
+    margin-bottom: var(--wsj-spacing-md);
+}
+
+.wsj-button-group-label {
+    font-size: var(--wsj-font-size-sm);
+    font-weight: 600;
+    color: var(--wsj-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--wsj-spacing-xs);
+    width: 100%;
+}
+
+/* Status Button Group */
+.wsj-status-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--wsj-spacing-xs);
+    background: var(--wsj-bg-white);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-md);
+    padding: var(--wsj-spacing-xs);
+}
+
+.wsj-status-btn {
+    padding: var(--wsj-spacing-sm) var(--wsj-spacing-md);
+    border: none;
+    border-radius: var(--wsj-radius-sm);
+    font-size: var(--wsj-font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: transparent;
+    color: var(--wsj-text-muted);
+}
+
+.wsj-status-btn:hover {
+    background: var(--wsj-bg-gray);
+    color: var(--wsj-text-primary);
+}
+
+.wsj-status-btn.active {
+    background: var(--wsj-accent);
+    color: var(--wsj-text-white);
+    box-shadow: var(--wsj-shadow-sm);
+}
+
+/* Status-specific colors */
+.wsj-status-btn[data-status="pending"] {
+    border-left: 3px solid var(--wsj-warning);
+}
+
+.wsj-status-btn[data-status="in_progress"] {
+    border-left: 3px solid var(--wsj-info);
+}
+
+.wsj-status-btn[data-status="completed"] {
+    border-left: 3px solid var(--wsj-success);
+}
+
+.wsj-status-btn[data-status="blocked"] {
+    border-left: 3px solid var(--wsj-danger);
+}
+
+/* Priority Button Group */
+.wsj-priority-buttons {
+    display: flex;
+    gap: var(--wsj-spacing-xs);
+}
+
+.wsj-priority-btn {
+    padding: var(--wsj-spacing-sm) var(--wsj-spacing-md);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-sm);
+    background: var(--wsj-bg-white);
+    color: var(--wsj-text-secondary);
+    font-size: var(--wsj-font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wsj-priority-btn:hover {
+    border-color: var(--wsj-accent);
+    color: var(--wsj-accent);
+}
+
+.wsj-priority-btn.active {
+    background: var(--wsj-accent);
+    border-color: var(--wsj-accent);
+    color: var(--wsj-text-white);
+}
+
+.wsj-priority-btn[data-priority="niedrig"] {
+    border-left: 3px solid var(--wsj-success);
+}
+
+.wsj-priority-btn[data-priority="mittel"] {
+    border-left: 3px solid var(--wsj-warning);
+}
+
+.wsj-priority-btn[data-priority="hoch"] {
+    border-left: 3px solid var(--wsj-danger);
+}
+
+/* Claude Modus Toggle */
+.wsj-claude-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--wsj-spacing-sm);
+    background: var(--wsj-bg-white);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-md);
+    padding: var(--wsj-spacing-md);
+}
+
+.wsj-claude-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--wsj-border-medium);
+    border-radius: var(--wsj-radius-sm);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wsj-claude-checkbox:checked {
+    background: var(--wsj-accent);
+    border-color: var(--wsj-accent);
+}
+
+.wsj-claude-checkbox:checked::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--wsj-text-white);
+    font-size: var(--wsj-font-size-xs);
+    font-weight: bold;
+}
+
+.wsj-claude-label {
+    font-size: var(--wsj-font-size-sm);
+    font-weight: 600;
+    color: var(--wsj-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ===========================
+   SCHWEBENDER SPEICHERN-BUTTON
+   =========================== */
+.wsj-floating-save {
+    position: fixed;
+    bottom: var(--wsj-spacing-xl);
+    right: var(--wsj-spacing-xl);
+    z-index: 9999;
+    background: var(--wsj-accent);
+    color: var(--wsj-text-white);
+    border: none;
+    border-radius: 50px;
+    padding: var(--wsj-spacing-md) var(--wsj-spacing-xl);
+    font-size: var(--wsj-font-size-base);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    box-shadow: var(--wsj-shadow-lg);
+    transition: all 0.3s ease;
+    min-width: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--wsj-spacing-xs);
+}
+
+.wsj-floating-save:hover {
+    background: var(--wsj-accent-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 15px 25px rgba(0, 0, 0, 0.15);
+}
+
+.wsj-floating-save:active {
+    transform: translateY(0);
+}
+
+.wsj-floating-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.wsj-floating-save.saving {
+    background: var(--wsj-warning);
+    cursor: not-allowed;
+}
+
+.wsj-floating-save.saved {
+    background: var(--wsj-success);
+    animation: saved-pulse 1s ease-out;
+}
+
+/* Floating Save Group */
+.wsj-floating-save-group {
+    position: fixed;
+    bottom: var(--wsj-spacing-xl);
+    right: var(--wsj-spacing-xl);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: var(--wsj-spacing-sm);
+    align-items: flex-end;
+}
+
+.wsj-floating-save-group .wsj-floating-save {
+    position: static;
+    width: 180px;
+}
+
+/* Button Variants */
+.wsj-floating-save-regular {
+    background: var(--wsj-accent);
+}
+
+.wsj-floating-save-regular:hover {
+    background: var(--wsj-accent-hover);
+}
+
+.wsj-floating-execute {
+    background: var(--wsj-success);
+}
+
+.wsj-floating-execute:hover {
+    background: #38a169;
+    box-shadow: 0 15px 25px rgba(56, 161, 105, 0.3);
+}
+
+.wsj-button-icon {
+    font-size: 16px;
+    line-height: 1;
+}
+
+.wsj-button-text {
+    font-size: var(--wsj-font-size-sm);
+    line-height: 1;
+}
+
+@keyframes saved-pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* ===========================
+   CHECKBOX-GRUPPEN FÜR AGENTEN
+   =========================== */
+.wsj-agent-checkboxes {
+    background: var(--wsj-bg-white);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-md);
+    padding: var(--wsj-spacing-lg);
+    margin-bottom: var(--wsj-spacing-lg);
+}
+
+.wsj-agent-checkboxes-title {
+    font-size: var(--wsj-font-size-sm);
+    font-weight: 700;
+    color: var(--wsj-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: var(--wsj-spacing-md);
+    border-bottom: 1px solid var(--wsj-border-light);
+    padding-bottom: var(--wsj-spacing-sm);
+}
+
+.wsj-agent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--wsj-spacing-md);
+}
+
+.wsj-agent-item {
+    display: flex;
+    align-items: center;
+    gap: var(--wsj-spacing-sm);
+    padding: var(--wsj-spacing-sm);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-sm);
+    transition: all 0.3s ease;
+}
+
+.wsj-agent-item:hover {
+    background: var(--wsj-bg-light);
+    border-color: var(--wsj-accent);
+}
+
+.wsj-agent-checkbox {
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--wsj-border-medium);
+    border-radius: var(--wsj-radius-sm);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wsj-agent-checkbox:checked {
+    background: var(--wsj-accent);
+    border-color: var(--wsj-accent);
+}
+
+.wsj-agent-checkbox:checked::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--wsj-text-white);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.wsj-agent-label {
+    font-size: var(--wsj-font-size-sm);
+    color: var(--wsj-text-secondary);
+    cursor: pointer;
+    flex: 1;
+}
+
+.wsj-agent-item:hover .wsj-agent-label {
+    color: var(--wsj-text-primary);
+}
+
+/* ===========================
+   COLLAPSIBLE VERSION HISTORY
+   =========================== */
+.wsj-version-history {
+    background: var(--wsj-bg-white);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-md);
+    margin-bottom: var(--wsj-spacing-lg);
+    overflow: hidden;
+}
+
+.wsj-version-header {
+    background: var(--wsj-bg-gray);
+    padding: var(--wsj-spacing-md);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.wsj-version-header:hover {
+    background: var(--wsj-border-light);
+}
+
+.wsj-version-title {
+    font-size: var(--wsj-font-size-sm);
+    font-weight: 700;
+    color: var(--wsj-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0;
+}
+
+.wsj-version-toggle {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: var(--wsj-accent);
+    color: var(--wsj-text-white);
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--wsj-font-size-xs);
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.wsj-version-toggle:hover {
+    background: var(--wsj-accent-hover);
+    transform: scale(1.1);
+}
+
+.wsj-version-toggle.collapsed::after {
+    content: "+";
+}
+
+.wsj-version-toggle.expanded::after {
+    content: "−";
+}
+
+.wsj-version-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.wsj-version-content.expanded {
+    max-height: 1000px;
+    padding: var(--wsj-spacing-lg);
+}
+
+.wsj-version-item {
+    border-bottom: 1px solid var(--wsj-border-light);
+    padding: var(--wsj-spacing-md) 0;
+}
+
+.wsj-version-item:last-child {
+    border-bottom: none;
+}
+
+.wsj-version-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--wsj-spacing-sm);
+}
+
+.wsj-version-date {
+    font-size: var(--wsj-font-size-xs);
+    color: var(--wsj-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.wsj-version-status {
+    font-size: var(--wsj-font-size-xs);
+    padding: 2px 8px;
+    border-radius: var(--wsj-radius-sm);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+}
+
+.wsj-version-status.completed {
+    background: rgba(72, 187, 120, 0.1);
+    color: var(--wsj-success);
+}
+
+.wsj-version-status.in-progress {
+    background: rgba(66, 153, 225, 0.1);
+    color: var(--wsj-info);
+}
+
+.wsj-version-status.pending {
+    background: rgba(237, 137, 54, 0.1);
+    color: var(--wsj-warning);
+}
+
+.wsj-version-description {
+    font-size: var(--wsj-font-size-sm);
+    color: var(--wsj-text-secondary);
+    line-height: 1.5;
+}
+
+/* ===========================
+   KONSISTENTE FORM-LAYOUTS
+   =========================== */
+.wsj-form-section {
+    background: var(--wsj-bg-white);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-md);
+    padding: var(--wsj-spacing-lg);
+    margin-bottom: var(--wsj-spacing-lg);
+}
+
+.wsj-form-section-title {
+    font-size: var(--wsj-font-size-lg);
+    font-weight: 700;
+    color: var(--wsj-text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin: 0 0 var(--wsj-spacing-md) 0;
+    border-bottom: 2px solid var(--wsj-accent);
+    padding-bottom: var(--wsj-spacing-sm);
+}
+
+.wsj-form-row {
+    display: flex;
+    gap: var(--wsj-spacing-md);
+    margin-bottom: var(--wsj-spacing-md);
+    flex-wrap: wrap;
+}
+
+.wsj-form-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.wsj-form-label {
+    display: block;
+    font-size: var(--wsj-font-size-sm);
+    font-weight: 600;
+    color: var(--wsj-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--wsj-spacing-xs);
+}
+
+.wsj-form-input,
+.wsj-form-textarea,
+.wsj-form-select {
+    width: 100%;
+    padding: var(--wsj-spacing-sm) var(--wsj-spacing-md);
+    border: 1px solid var(--wsj-border-light);
+    border-radius: var(--wsj-radius-sm);
+    font-size: var(--wsj-font-size-sm);
+    color: var(--wsj-text-primary);
+    background: var(--wsj-bg-white);
+    transition: all 0.3s ease;
+    font-family: var(--wsj-font-family);
+}
+
+.wsj-form-input:focus,
+.wsj-form-textarea:focus,
+.wsj-form-select:focus {
+    outline: none;
+    border-color: var(--wsj-accent);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.wsj-form-textarea {
+    min-height: 120px;
+    resize: vertical;
+    line-height: 1.6;
+}
+
+.wsj-form-help {
+    font-size: var(--wsj-font-size-xs);
+    color: var(--wsj-text-muted);
+    margin-top: var(--wsj-spacing-xs);
+    font-style: italic;
+}
+
+/* ===========================
+   RESPONSIVE DESIGN
+   =========================== */
+@media (max-width: 768px) {
+    .wsj-button-group {
+        flex-direction: column;
+    }
+    
+    .wsj-status-buttons {
+        flex-direction: column;
+    }
+    
+    .wsj-priority-buttons {
+        flex-direction: column;
+    }
+    
+    .wsj-agent-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .wsj-form-row {
+        flex-direction: column;
+    }
+    
+    .wsj-floating-save-group {
+        bottom: var(--wsj-spacing-md);
+        right: var(--wsj-spacing-md);
+        left: var(--wsj-spacing-md);
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    
+    .wsj-floating-save-group .wsj-floating-save {
+        width: calc(50% - var(--wsj-spacing-xs));
+        padding: var(--wsj-spacing-sm) var(--wsj-spacing-md);
+        font-size: var(--wsj-font-size-xs);
+    }
+    
+    .wsj-version-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--wsj-spacing-xs);
+    }
+    
+    .wsj-execute-modal {
+        margin: var(--wsj-spacing-md);
+        width: calc(100% - 2 * var(--wsj-spacing-md));
+        padding: var(--wsj-spacing-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .wsj-admin-title {
+        font-size: var(--wsj-font-size-lg);
+    }
+    
+    .wsj-form-section {
+        padding: var(--wsj-spacing-md);
+    }
+    
+    .wsj-floating-save-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .wsj-floating-save-group .wsj-floating-save {
+        width: 100%;
+        border-radius: var(--wsj-radius-md);
+    }
+    
+    .wsj-button-icon {
+        font-size: 14px;
+    }
+    
+    .wsj-button-text {
+        font-size: var(--wsj-font-size-xs);
+    }
+}
+
+/* ===========================
+   UTILITY CLASSES
+   =========================== */
+.wsj-text-center { text-align: center; }
+.wsj-text-left { text-align: left; }
+.wsj-text-right { text-align: right; }
+
+.wsj-mb-0 { margin-bottom: 0; }
+.wsj-mb-sm { margin-bottom: var(--wsj-spacing-sm); }
+.wsj-mb-md { margin-bottom: var(--wsj-spacing-md); }
+.wsj-mb-lg { margin-bottom: var(--wsj-spacing-lg); }
+
+.wsj-mt-0 { margin-top: 0; }
+.wsj-mt-sm { margin-top: var(--wsj-spacing-sm); }
+.wsj-mt-md { margin-top: var(--wsj-spacing-md); }
+.wsj-mt-lg { margin-top: var(--wsj-spacing-lg); }
+
+.wsj-hidden { display: none !important; }
+.wsj-visible { display: block; }
+
+/* Fix für Execute Overlay - MUSS versteckt sein beim Laden */
+.wsj-execute-overlay {
+    display: none !important;
+}
+
+/* Nur anzeigen wenn explizit aktiviert */
+.wsj-execute-overlay.wsj-show {
+    display: flex !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+}
+
+.wsj-text-success { color: var(--wsj-success); }
+.wsj-text-warning { color: var(--wsj-warning); }
+.wsj-text-danger { color: var(--wsj-danger); }
+.wsj-text-info { color: var(--wsj-info); }
+
+/* ===========================
+   EXECUTE OVERLAY & MODAL
+   =========================== */
+.wsj-execute-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+}
+
+.wsj-execute-modal {
+    background: var(--wsj-bg-white);
+    border-radius: var(--wsj-radius-lg);
+    padding: var(--wsj-spacing-xl);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: var(--wsj-shadow-lg);
+    animation: wsj-modal-appear 0.3s ease-out;
+}
+
+.wsj-execute-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--wsj-border-light);
+    border-left: 4px solid var(--wsj-success);
+    border-radius: 50%;
+    animation: wsj-spin 1s linear infinite;
+    margin: 0 auto var(--wsj-spacing-md) auto;
+}
+
+.wsj-execute-modal h3 {
+    color: var(--wsj-text-primary);
+    margin: 0 0 var(--wsj-spacing-sm) 0;
+    font-size: var(--wsj-font-size-lg);
+    font-weight: 600;
+}
+
+.wsj-execute-modal p {
+    color: var(--wsj-text-secondary);
+    margin: 0;
+    font-size: var(--wsj-font-size-sm);
+}
+
+/* ===========================
+   ANIMATIONS
+   =========================== */
+@keyframes wsj-fade-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes wsj-slide-down {
+    from { max-height: 0; opacity: 0; }
+    to { max-height: 1000px; opacity: 1; }
+}
+
+@keyframes wsj-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@keyframes wsj-modal-appear {
+    from { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.95); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+    }
+}
+
+.wsj-animate-fade-in {
+    animation: wsj-fade-in 0.3s ease-out;
+}
+
+.wsj-animate-slide-down {
+    animation: wsj-slide-down 0.3s ease-out;
+}
+
+/* ===========================
+   DARK MODE SUPPORT (OPTIONAL)
+   =========================== */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --wsj-bg-white: #1a202c;
+        --wsj-bg-light: #2d3748;
+        --wsj-bg-gray: #4a5568;
+        --wsj-text-primary: #f7fafc;
+        --wsj-text-secondary: #e2e8f0;
+        --wsj-text-muted: #a0aec0;
+        --wsj-border-light: #4a5568;
+        --wsj-border-medium: #718096;
+        --wsj-border-dark: #a0aec0;
+    }
+}

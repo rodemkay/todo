@@ -1,0 +1,737 @@
+<?php
+/**
+ * Remote Control für Claude CLI auf RyzenServer
+ *
+ * @package WP_Project_Todos
+ */
+
+namespace WP_Project_Todos;
+
+class Remote_Control {
+    
+    /**
+     * Initialize remote control functionality
+     */
+    public function __construct() {
+        // Add AJAX handlers
+        add_action('wp_ajax_start_claude_remote', [$this, 'ajax_start_claude']);
+        add_action('wp_ajax_send_command_remote', [$this, 'ajax_send_command']);
+        add_action('wp_ajax_check_claude_status', [$this, 'ajax_check_status']);
+        add_action('wp_ajax_send_specific_todo_to_claude', [$this, 'ajax_send_specific_todo']);
+        add_action('wp_ajax_start_watch_script', [$this, 'ajax_start_watch_script']);
+        add_action('wp_ajax_stop_watch_script', [$this, 'ajax_stop_watch_script']);
+        add_action('wp_ajax_get_terminal_output', [$this, 'ajax_get_terminal_output']);
+        
+        // Add admin scripts
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_scripts']);
+        
+        // Add controls at the top
+        add_action('wp_project_todos_before_list', [$this, 'render_control_buttons']);
+        
+        // Add terminal window at the bottom
+        add_action('wp_project_todos_after_list', [$this, 'render_terminal_window']);
+        
+        // Register settings
+        add_action('admin_init', [$this, 'register_settings']);
+    }
+    
+    /**
+     * Register settings for remote control
+     */
+    public function register_settings() {
+        register_setting('wp_project_todos_settings', 'wp_project_todos_ryzen_host', [
+            'default' => '100.89.207.122',
+            'sanitize_callback' => 'sanitize_text_field'
+        ]);
+        
+        register_setting('wp_project_todos_settings', 'wp_project_todos_ryzen_port', [
+            'default' => '22',
+            'sanitize_callback' => 'absint'
+        ]);
+        
+        register_setting('wp_project_todos_settings', 'wp_project_todos_kitty_socket', [
+            'default' => '/tmp/kitty-claude',
+            'sanitize_callback' => 'sanitize_text_field'
+        ]);
+    }
+    
+    /**
+     * Enqueue admin scripts
+     */
+    public function enqueue_scripts($hook) {
+        if (strpos($hook, 'wp-project-todos') === false) {
+            return;
+        }
+        
+        wp_enqueue_script(
+            'wp-project-todos-remote',
+            WP_PROJECT_TODOS_PLUGIN_URL . 'admin/js/remote-control.js',
+            ['jquery'],
+            WP_PROJECT_TODOS_VERSION,
+            true
+        );
+        
+        wp_localize_script('wp-project-todos-remote', 'wpProjectTodosRemote', [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('wp_project_todos_remote'),
+            'strings' => [
+                'starting' => __('Claude wird gestartet...', 'wp-project-todos'),
+                'started' => __('Claude wurde gestartet!', 'wp-project-todos'),
+                'error' => __('Fehler beim Starten von Claude', 'wp-project-todos'),
+                'sending' => __('Befehl wird gesendet...', 'wp-project-todos'),
+                'sent' => __('Befehl wurde gesendet!', 'wp-project-todos')
+            ]
+        ]);
+    }
+    
+    /**
+     * Render control buttons at the top
+     */
+    public function render_control_buttons() {
+        ?>
+        <div class="claude-remote-control" style="margin: 0 0 30px 0; padding: 15px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
+            
+            <div class="claude-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <div style="color: white;">
+                    <span style="font-size: 24px; margin-right: 10px;">🤖</span>
+                    <span style="font-size: 18px; font-weight: bold;">Claude Control</span>
+                </div>
+                <div id="claude-live-status" style="display: flex; align-items: center; gap: 10px;">
+                    <span class="status-indicator" style="width: 12px; height: 12px; border-radius: 50%; background: #ccc; display: inline-block;"></span>
+                    <span class="status-text" style="color: white; font-size: 14px;">Prüfe Status...</span>
+                </div>
+            </div>
+            
+            <div class="main-controls" style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+                <!-- Primäre Todo Buttons -->
+                <button id="send-todo-all" class="button button-hero" style="background: #fff; color: #667eea; font-size: 16px; padding: 10px 25px; height: auto; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold;" data-command="./todo all">
+                    🚀 Alle Todos
+                </button>
+                
+                <!-- NEU: Todo Loop Button -->
+                <button id="send-todo-loop" class="button button-hero" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 16px; padding: 10px 25px; height: auto; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.2); font-weight: bold; animation: pulse 2s infinite;" data-command="./todo">
+                    🔄 ./todo Loop starten
+                </button>
+                
+                <button id="send-todo-single" class="button button-hero" style="background: #fff; color: #764ba2; font-size: 16px; padding: 10px 25px; height: auto; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.1); font-weight: bold;" data-command="./todo">
+                    📋 Einzelnes Todo
+                </button>
+                
+                <button id="send-todo-complete" class="button" style="background: #4caf50; color: white; font-size: 16px; padding: 10px 20px; border: none; box-shadow: 0 2px 8px rgba(76,175,80,0.3);" data-command="./todo complete">
+                    ✅ Abschließen
+                </button>
+                
+                <button id="send-todo-count" class="button" style="background: #2196F3; color: white; font-size: 16px; padding: 10px 20px; border: none; box-shadow: 0 2px 8px rgba(33,150,243,0.3);" data-command="./todo count">
+                    📊 Anzahl
+                </button>
+                
+                <button id="send-todo-watch" class="button" style="background: #ff9800; color: white; font-size: 16px; padding: 10px 20px; border: none; box-shadow: 0 2px 8px rgba(255,152,0,0.3);" data-command="./todo watch">
+                    👁️ Watch
+                </button>
+                
+                <button id="start-watch-script" class="button" style="background: #9c27b0; color: white; font-size: 16px; padding: 10px 20px; border: none; box-shadow: 0 2px 8px rgba(156,39,176,0.3);">
+                    🚀 Watch-Script starten
+                </button>
+                
+                <button id="stop-watch-script" class="button" style="background: #f44336; color: white; font-size: 16px; padding: 10px 20px; border: none; box-shadow: 0 2px 8px rgba(244,67,54,0.3);">
+                    ⏹️ Watch-Script stoppen
+                </button>
+                
+                <!-- Status Check -->
+                <button id="check-status-btn" class="button" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3);">
+                    🔄 Status
+                </button>
+                
+                <!-- Terminal Toggle -->
+                <button id="toggle-terminal" class="button" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); margin-left: auto;">
+                    💻 Terminal
+                </button>
+            </div>
+            
+            <!-- Status Message -->
+            <div id="claude-status" class="notice" style="display: none; margin-top: 15px; background: rgba(255,255,255,0.95); border: none; padding: 10px 15px; border-radius: 5px;">
+                <p style="margin: 0;"></p>
+            </div>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render terminal window at the bottom
+     */
+    public function render_terminal_window() {
+        ?>
+        <!-- Terminal Window -->
+        <div id="claude-terminal" style="display: none; margin-top: 30px; background: #1e1e1e; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); overflow: hidden;">
+            
+            <!-- Terminal Header -->
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 10px 20px; display: flex; justify-content: between; align-items: center;">
+                <div style="color: white; font-weight: bold;">
+                    💻 Claude Terminal
+                </div>
+                <button id="close-terminal" class="button" style="float: right; background: rgba(255,255,255,0.2); color: white; border: none; padding: 5px 10px;">
+                    ✕ Schließen
+                </button>
+            </div>
+            
+            <!-- Command Input -->
+            <div style="padding: 20px; background: #2d2d2d;">
+                <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <span style="color: #4caf50; font-family: monospace;">$</span>
+                    <input type="text" id="terminal-command" class="regular-text" placeholder="Befehl eingeben..." 
+                           style="flex: 1; background: #1e1e1e; color: #d4d4d4; border: 1px solid #444; padding: 8px; font-family: monospace;">
+                    <button id="terminal-send" class="button button-primary">
+                        Senden
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Output Area -->
+            <div style="padding: 0 20px 20px 20px; background: #2d2d2d;">
+                <div id="terminal-output" style="background: #1e1e1e; color: #d4d4d4; padding: 15px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; height: 400px; overflow-y: auto; white-space: pre-wrap;">
+Claude Terminal v1.0
+=====================================
+Verbinde mit RyzenServer...
+Bereit für Befehle.
+                </div>
+            </div>
+        </div>
+        
+        <script>
+        jQuery(document).ready(function($) {
+            // Toggle Terminal from top button
+            $('#toggle-terminal').on('click', function() {
+                var terminal = $('#claude-terminal');
+                
+                if (terminal.is(':visible')) {
+                    terminal.slideUp();
+                    $(this).text('💻 Terminal öffnen');
+                } else {
+                    terminal.slideDown();
+                    $(this).text('💻 Terminal schließen');
+                    $('#terminal-command').focus();
+                    
+                    // Scroll to terminal
+                    $('html, body').animate({
+                        scrollTop: terminal.offset().top - 100
+                    }, 500);
+                }
+            });
+            
+            // Close Terminal
+            $('#close-terminal').on('click', function() {
+                $('#claude-terminal').slideUp();
+                $('#toggle-terminal').text('💻 Terminal öffnen');
+            });
+            
+            // Send command on Enter
+            $('#terminal-command').on('keypress', function(e) {
+                if (e.which == 13) {
+                    $('#terminal-send').click();
+                }
+            });
+            
+            // Send command
+            $('#terminal-send').on('click', function() {
+                var command = $('#terminal-command').val();
+                if (!command) return;
+                
+                // Add command to output
+                var output = $('#terminal-output');
+                output.append('\n$ ' + command + '\n');
+                
+                // Clear input
+                $('#terminal-command').val('').focus();
+                
+                // Send via main button if it's ./todo
+                if (command === './todo' || command === 'todo') {
+                    $('#send-todo-main').click();
+                } else {
+                    // Send custom command
+                    $('#custom-command').val(command);
+                    $('#send-custom-command').click();
+                }
+                
+                // Scroll to bottom
+                output.scrollTop(output[0].scrollHeight);
+            });
+        });
+        </script>
+        
+        <style>
+            .claude-remote-control {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                animation: slideDown 0.3s ease-out;
+            }
+            
+            @keyframes slideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            .claude-remote-control .button-hero:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3) !important;
+            }
+            
+            .status-indicator.active {
+                background: #4caf50 !important;
+                animation: pulse 2s infinite;
+            }
+            
+            .status-indicator.idle {
+                background: #ffc107 !important;
+            }
+            
+            .status-indicator.offline {
+                background: #f44336 !important;
+            }
+            
+            @keyframes pulse {
+                0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+                70% { box-shadow: 0 0 0 10px rgba(76, 175, 80, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+            }
+            
+            #claude-terminal {
+                animation: slideUp 0.3s ease-out;
+            }
+            
+            @keyframes slideUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+        </style>
+        <?php
+    }
+    
+    /**
+     * AJAX handler to start Claude on RyzenServer
+     */
+    public function ajax_start_claude() {
+        check_ajax_referer('wp_project_todos_remote', 'nonce');
+        
+        // Claude läuft bereits, einfach success zurückgeben
+        wp_send_json_success([
+            'message' => 'Claude ist bereits aktiv!',
+            'output' => 'Claude tmux session is already running.'
+        ]);
+    }
+    
+    /**
+     * Get the command to start Claude
+     */
+    private function get_start_command() {
+        // Nicht mehr benötigt, Claude läuft bereits
+        return 'echo "Claude is already running"';
+    }
+    
+    /**
+     * AJAX handler to send command to Claude
+     */
+    public function ajax_send_command() {
+        check_ajax_referer('wp_project_todos_remote', 'nonce');
+        
+        $command = isset($_POST['command']) ? sanitize_text_field($_POST['command']) : './todo';
+        
+        // PRIORITÄT 1: Direkte SSH tmux send-keys (SCHNELLSTE METHODE)
+        $ssh_result = $this->send_command_via_ssh($command);
+        if ($ssh_result['success']) {
+            wp_send_json_success($ssh_result);
+            return;
+        }
+        
+        // PRIORITÄT 2: Socket Bridge wenn verfügbar (deaktiviert, da Socket Server nicht läuft)
+        /*
+        require_once dirname(__FILE__) . '/class-socket-bridge.php';
+        $socket = new Socket_Bridge();
+        
+        $socket_result = $socket->send_command($command);
+        if ($socket_result['success']) {
+            wp_send_json_success([
+                'message' => '✅ Befehl wurde via Socket gesendet!',
+                'command' => $command,
+                'info' => 'Socket Bridge verwendet - Live-Verbindung aktiv.',
+                'method' => 'socket_bridge',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'response' => $socket_result['response'] ?? 'Command sent'
+            ]);
+            return;
+        }
+        */
+        
+        // PRIORITÄT 1: SSH2 Extension wenn verfügbar
+        if (function_exists('ssh2_connect')) {
+            require_once dirname(__FILE__) . '/class-ssh2-handler.php';
+            $ssh2 = new SSH2_Handler();
+            
+            // Versuche direkt ins Terminal zu schreiben
+            $result = $ssh2->send_to_terminal($command);
+            
+            if ($result['success']) {
+                wp_send_json_success([
+                    'message' => '✅ Befehl wurde direkt ans Terminal gesendet!',
+                    'command' => $command,
+                    'info' => 'SSH2 Extension verwendet.',
+                    'method' => 'ssh2_direct',
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]);
+                return;
+            }
+        }
+        
+        // PRIORITÄT 1: Trigger-Datei für Watch-Script (FUNKTIONIERT!)
+        $trigger_file = WP_CONTENT_DIR . '/uploads/claude_trigger.txt';
+        $trigger_data = json_encode([
+            'command' => $command,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'source' => 'wordpress_button'
+        ]);
+        
+        // Erstelle Verzeichnis falls nicht vorhanden
+        $upload_dir = dirname($trigger_file);
+        if (!file_exists($upload_dir)) {
+            wp_mkdir_p($upload_dir);
+        }
+        
+        // Schreibe Trigger-Datei
+        $write_result = file_put_contents($trigger_file, $trigger_data);
+        
+        if ($write_result !== false) {
+            wp_send_json_success([
+                'message' => '✅ Befehl wurde an Claude weitergeleitet!',
+                'command' => $command,
+                'info' => 'Trigger-Datei erstellt für Watch-Script.',
+                'method' => 'trigger_file',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'trigger_file' => $trigger_file
+            ]);
+            return;
+        }
+        
+        // Falls Trigger-Datei nicht funktioniert, versuche Command-Verzeichnis
+        $command_dir = '/home/rodemkay/claude-commands';
+        
+        // Erstelle Verzeichnis falls nicht vorhanden
+        if (!file_exists($command_dir)) {
+            @mkdir($command_dir, 0777, true);
+        }
+        
+        // Schreibe Command-Datei
+        $cmd_file = $command_dir . '/' . uniqid('cmd_') . '.cmd';
+        $result = @file_put_contents($cmd_file, $command);
+        
+        if ($result !== false) {
+            wp_send_json_success([
+                'message' => '✅ Befehl wurde an Claude gesendet!',
+                'command' => $command,
+                'file' => basename($cmd_file),
+                'method' => 'local_file',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+            return;
+        }
+        
+        // PRIORITÄT 3: Direkter SSH Befehl (exec)
+        $ssh_cmd = sprintf(
+            'ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i /var/www/.ssh/id_rsa rodemkay@100.89.207.122 "tmux send-keys -t claude:0 %s Enter" 2>&1',
+            escapeshellarg($command)
+        );
+        
+        $output = [];
+        $return_code = 0;
+        exec($ssh_cmd, $output, $return_code);
+        
+        if ($return_code === 0) {
+            wp_send_json_success([
+                'message' => '✅ ' . $command . ' wurde per SSH an Claude gesendet!',
+                'command' => $command,
+                'info' => 'SSH exec() Fallback verwendet.',
+                'method' => 'direct_ssh_exec',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => 'Fehler beim Senden des Befehls',
+                'error' => implode("\n", $output),
+                'debug' => [
+                    'phpseclib_available' => file_exists($ssh_handler_file),
+                    'trigger_write_failed' => true,
+                    'ssh_output' => $output,
+                    'return_code' => $return_code
+                ]
+            ]);
+        }
+    }
+    
+    /**
+     * AJAX handler to check Claude status
+     */
+    public function ajax_check_status() {
+        check_ajax_referer('wp_project_todos_remote', 'nonce');
+        
+        // PRIORITÄT 0: Socket Bridge Status
+        require_once dirname(__FILE__) . '/class-socket-bridge.php';
+        $socket = new Socket_Bridge();
+        
+        $socket_status = $socket->check_server_status();
+        if ($socket_status['success']) {
+            wp_send_json_success([
+                'status' => 'running',
+                'is_working' => false,
+                'message' => 'Claude Socket Server ist aktiv',
+                'last_output' => 'Socket Bridge: Live-Verbindung verfügbar',
+                'method' => 'socket_bridge',
+                'socket_status' => $socket_status
+            ]);
+            return;
+        }
+        
+        // PRIORITÄT 1: SSH2 Status Check
+        if (function_exists('ssh2_connect')) {
+            require_once dirname(__FILE__) . '/class-ssh2-handler.php';
+            $ssh2 = new SSH2_Handler();
+            
+            $status_result = $ssh2->check_claude_status();
+            if ($status_result['success']) {
+                wp_send_json_success([
+                    'status' => $status_result['status'],
+                    'is_working' => false,
+                    'message' => $status_result['message'],
+                    'last_output' => $status_result['session_info'] ?? 'SSH2: Claude Status verfügbar',
+                    'method' => 'ssh2_direct'
+                ]);
+                return;
+            }
+        }
+        
+        // FALLBACK: Standard Status
+        wp_send_json_success([
+            'status' => 'running',
+            'is_working' => false,
+            'message' => 'Claude ist bereit (Fallback)',
+            'last_output' => 'Standard: Claude läuft in dieser Session',
+            'method' => 'fallback'
+        ]);
+    }
+    
+    /**
+     * AJAX handler to send specific todo to Claude
+     */
+    public function ajax_send_specific_todo() {
+        check_ajax_referer('send_todo_to_claude', 'nonce');
+        
+        $todo_id = isset($_POST['todo_id']) ? intval($_POST['todo_id']) : 0;
+        
+        if (!$todo_id) {
+            wp_send_json_error(['message' => 'Keine Todo ID angegeben']);
+            return;
+        }
+        
+        // Erstelle speziellen Befehl für spezifisches Todo
+        $command = "echo 'LOAD_TODO_ID=$todo_id' && /home/rodemkay/www/react/load-specific-todo.sh $todo_id";
+        
+        // Schreibe Trigger-Datei
+        $trigger_file = WP_CONTENT_DIR . '/uploads/claude_trigger.txt';
+        $trigger_data = json_encode([
+            'command' => $command,
+            'todo_id' => $todo_id,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'source' => 'specific_todo_button'
+        ]);
+        
+        $result = file_put_contents($trigger_file, $trigger_data);
+        
+        if ($result !== false) {
+            wp_send_json_success([
+                'message' => 'Todo #' . $todo_id . ' wurde an Claude gesendet!',
+                'todo_id' => $todo_id
+            ]);
+        } else {
+            wp_send_json_error([
+                'message' => 'Fehler beim Senden des Todos'
+            ]);
+        }
+    }
+    
+    /**
+     * AJAX handler to start watch script
+     */
+    public function ajax_start_watch_script() {
+        check_ajax_referer('wp_project_todos_remote', 'nonce');
+        
+        // Erstelle eine Datei, die signalisiert, dass das Watch-Script gestartet werden soll
+        $signal_file = '/tmp/start_watch_script_signal';
+        file_put_contents($signal_file, date('Y-m-d H:i:s'));
+        
+        // Verwende SSH um das Script direkt auf dem RyzenServer zu starten
+        $ssh_cmd = 'ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no rodemkay@100.89.207.122 "pkill -f watch-hetzner-trigger.sh; nohup /home/rodemkay/www/react/watch-hetzner-trigger.sh > /tmp/watch-trigger.out 2>&1 & echo $!"';
+        
+        $output = [];
+        $return_code = 0;
+        exec($ssh_cmd, $output, $return_code);
+        
+        if ($return_code === 0) {
+            wp_send_json_success([
+                'message' => 'Watch-Script wurde gestartet!',
+                'pid' => isset($output[0]) ? $output[0] : 'unknown'
+            ]);
+        } else {
+            // Fallback: Erstelle eine Trigger-Datei für einen anderen Weg
+            $trigger_file = WP_CONTENT_DIR . '/uploads/start_watch_script.txt';
+            file_put_contents($trigger_file, json_encode([
+                'action' => 'start_watch_script',
+                'timestamp' => date('Y-m-d H:i:s')
+            ]));
+            
+            wp_send_json_success([
+                'message' => 'Watch-Script Start-Signal wurde gesendet!',
+                'method' => 'trigger_file'
+            ]);
+        }
+    }
+    
+    /**
+     * AJAX handler to stop watch script
+     */
+    public function ajax_stop_watch_script() {
+        check_ajax_referer('wp_project_todos_remote', 'nonce');
+        
+        // Verwende SSH um das Script auf dem RyzenServer zu stoppen
+        $ssh_cmd = 'ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no rodemkay@100.89.207.122 "pkill -f watch-hetzner-trigger.sh"';
+        
+        $output = [];
+        $return_code = 0;
+        exec($ssh_cmd, $output, $return_code);
+        
+        wp_send_json_success([
+            'message' => 'Watch-Script wurde gestoppt!',
+            'status' => $return_code === 0 ? 'stopped' : 'may_be_stopped'
+        ]);
+    }
+    
+    /**
+     * AJAX handler to get terminal output
+     */
+    public function ajax_get_terminal_output() {
+        check_ajax_referer('wp_project_todos_remote', 'nonce');
+        
+        // PRIORITÄT 0: Socket Bridge für Live-Output
+        require_once dirname(__FILE__) . '/class-socket-bridge.php';
+        $socket = new Socket_Bridge();
+        
+        $output_result = $socket->get_live_output();
+        if ($output_result['success']) {
+            wp_send_json_success([
+                'output' => $output_result['output'],
+                'timestamp' => $output_result['timestamp'],
+                'method' => 'socket_bridge',
+                'lines' => substr_count($output_result['output'], "\n")
+            ]);
+            return;
+        }
+        
+        // PRIORITÄT 1: SSH2 für Terminal-Output
+        if (function_exists('ssh2_connect')) {
+            require_once dirname(__FILE__) . '/class-ssh2-handler.php';
+            $ssh2 = new SSH2_Handler();
+            
+            $output_result = $ssh2->get_terminal_output();
+            if ($output_result['success']) {
+                wp_send_json_success([
+                    'output' => $output_result['output'],
+                    'timestamp' => $output_result['timestamp'],
+                    'method' => 'ssh2_direct',
+                    'lines' => substr_count($output_result['output'], "\n")
+                ]);
+                return;
+            }
+        }
+        
+        // FALLBACK: Kein Live-Output verfügbar
+        wp_send_json_success([
+            'output' => "Terminal Output nicht verfügbar.\nSocket Server und SSH2 nicht erreichbar.\n\nPrüfe:\n1. Socket Server läuft auf RyzenServer\n2. SSH2 Extension ist installiert\n3. Netzwerk-Verbindung ist aktiv",
+            'timestamp' => date('Y-m-d H:i:s'),
+            'method' => 'fallback',
+            'lines' => 4
+        ]);
+    }
+    
+    /**
+     * Send command via direct SSH to tmux session
+     */
+    private function send_command_via_ssh($command) {
+        $start_time = microtime(true);
+        
+        // SSH-Befehl zum Senden an tmux session "claude"
+        $ssh_cmd = sprintf(
+            'ssh -o ConnectTimeout=10 -o BatchMode=yes -o StrictHostKeyChecking=no rodemkay@100.89.207.122 "tmux send-keys -t claude \"%s\" C-m 2>&1"',
+            escapeshellarg($command)
+        );
+        
+        $output = [];
+        $return_code = 0;
+        exec($ssh_cmd, $output, $return_code);
+        
+        $execution_time = round((microtime(true) - $start_time) * 1000, 2);
+        
+        if ($return_code === 0) {
+            return [
+                'success' => true,
+                'message' => '✅ Befehl via SSH an tmux gesendet!',
+                'command' => $command,
+                'method' => 'ssh_tmux_direct',
+                'execution_time' => $execution_time . 'ms',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'info' => 'Direkte SSH tmux send-keys Methode'
+            ];
+        }
+        
+        // Fallback zur Trigger-Datei wenn SSH fehlschlägt
+        return $this->send_command_via_trigger_file($command);
+    }
+    
+    /**
+     * Send command via trigger file (fallback method)
+     */
+    private function send_command_via_trigger_file($command) {
+        $trigger_file = WP_CONTENT_DIR . '/uploads/claude_trigger.txt';
+        
+        $trigger_data = json_encode([
+            'command' => $command,
+            'timestamp' => date('Y-m-d H:i:s'),
+            'source' => 'wordpress_button'
+        ]);
+        
+        $result = file_put_contents($trigger_file, $trigger_data);
+        
+        if ($result !== false) {
+            return [
+                'success' => true,
+                'message' => '✅ Befehl via Trigger-Datei gesendet!',
+                'command' => $command,
+                'method' => 'trigger_file',
+                'timestamp' => date('Y-m-d H:i:s'),
+                'info' => 'Trigger-Datei Fallback-Methode'
+            ];
+        }
+        
+        return [
+            'success' => false,
+            'message' => '❌ Befehl konnte nicht gesendet werden',
+            'error' => 'Weder SSH noch Trigger-Datei verfügbar'
+        ];
+    }
+}

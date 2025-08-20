@@ -1,0 +1,65 @@
+/**
+ * WP Project To-Dos Admin Styles
+ */
+
+.wp-project-todos-list {
+    margin: 20px 0;
+}
+
+.todo-item {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.todo-item h3 {
+    margin-top: 0;
+    color: #23282d;
+}
+
+.todo-status-pending { color: #996800; }
+.todo-status-in_progress { color: #0073aa; }
+.todo-status-completed { color: #46b450; }
+.todo-status-blocked { color: #dc3232; }
+
+.todo-scope-frontend { background: #3498db; color: white; padding: 2px 6px; border-radius: 3px; }
+.todo-scope-backend { background: #2ecc71; color: white; padding: 2px 6px; border-radius: 3px; }
+.todo-scope-n8n { background: #f39c12; color: white; padding: 2px 6px; border-radius: 3px; }
+.todo-scope-mt5 { background: #9b59b6; color: white; padding: 2px 6px; border-radius: 3px; }
+
+.claude-output-viewer {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    padding: 20px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.claude-output-entry {
+    margin-bottom: 10px;
+    padding-left: 20px;
+    position: relative;
+}
+
+.claude-output-entry::before {
+    content: '>';
+    position: absolute;
+    left: 0;
+    color: #569cd6;
+}
+
+.claude-output-timestamp {
+    color: #808080;
+    font-size: 11px;
+}
+
+.claude-output-info { color: #d4d4d4; }
+.claude-output-success { color: #4ec9b0; }
+.claude-output-warning { color: #ce9178; }
+.claude-output-error { color: #f48771; }
