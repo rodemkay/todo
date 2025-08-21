@@ -1,0 +1,92 @@
+#!/bin/bash
+
+# INTELLIGENT TODO MONITOR - Management Script
+# Quick access script for todo monitoring system
+
+SCRIPT_DIR="/home/rodemkay/www/react/todo"
+MONITOR_SCRIPT="$SCRIPT_DIR/intelligent_todo_monitor_fixed.sh"
+SERVICE_FILE="$SCRIPT_DIR/intelligent-todo-monitor.service"
+LOG_FILE="/tmp/intelligent_todo_monitor.log"
+
+case "${1:-help}" in
+    start)
+        echo "🚀 Starting Intelligent TODO Monitor..."
+        nohup "$MONITOR_SCRIPT" start > /tmp/monitor_startup.log 2>&1 &
+        sleep 2
+        if pgrep -f intelligent_todo_monitor_fixed.sh > /dev/null; then
+            echo "✅ Monitor successfully started"
+            echo "📋 PID: $(pgrep -f intelligent_todo_monitor_fixed.sh)"
+        else
+            echo "❌ Failed to start monitor"
+            cat /tmp/monitor_startup.log
+        fi
+        ;;
+    stop)
+        echo "🛑 Stopping Intelligent TODO Monitor..."
+        "$MONITOR_SCRIPT" stop
+        sleep 1
+        if ! pgrep -f intelligent_todo_monitor_fixed.sh > /dev/null; then
+            echo "✅ Monitor successfully stopped"
+        else
+            echo "⚠️  Monitor still running, forcing kill..."
+            pkill -9 -f intelligent_todo_monitor_fixed.sh
+        fi
+        ;;
+    status)
+        "$MONITOR_SCRIPT" status
+        ;;
+    restart)
+        $0 stop
+        sleep 2
+        $0 start
+        ;;
+    log)
+        echo "📋 Last 20 lines of monitor log:"
+        tail -20 "$LOG_FILE" 2>/dev/null || echo "No log file found"
+        ;;
+    follow)
+        echo "📋 Following monitor log (Ctrl+C to exit):"
+        tail -f "$LOG_FILE" 2>/dev/null || echo "No log file found"
+        ;;
+    install-service)
+        echo "🔧 Installing systemd service..."
+        sudo cp "$SERVICE_FILE" /etc/systemd/system/
+        sudo systemctl daemon-reload
+        sudo systemctl enable intelligent-todo-monitor
+        echo "✅ Service installed and enabled"
+        echo "🚀 Start with: sudo systemctl start intelligent-todo-monitor"
+        ;;
+    test)
+        echo "🧪 Testing monitor script..."
+        "$MONITOR_SCRIPT" start &
+        MONITOR_PID=$!
+        sleep 5
+        if ps -p $MONITOR_PID > /dev/null; then
+            echo "✅ Monitor is running correctly"
+            kill $MONITOR_PID
+        else
+            echo "❌ Monitor failed to start"
+        fi
+        ;;
+    help|*)
+        echo "Intelligent TODO Monitor - Management Script"
+        echo ""
+        echo "Usage: $0 COMMAND"
+        echo ""
+        echo "Commands:"
+        echo "  start           - Start the monitor"
+        echo "  stop            - Stop the monitor"
+        echo "  restart         - Restart the monitor"
+        echo "  status          - Show monitor status"
+        echo "  log             - Show last 20 log lines"
+        echo "  follow          - Follow log in real-time"
+        echo "  test            - Test monitor functionality"
+        echo "  install-service - Install as systemd service"
+        echo "  help            - Show this help"
+        echo ""
+        echo "Examples:"
+        echo "  ./monitor start"
+        echo "  ./monitor status"
+        echo "  ./monitor follow"
+        ;;
+esac
