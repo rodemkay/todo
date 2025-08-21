@@ -132,18 +132,25 @@ find_next_todo() {
     local query="SELECT id, title, priority FROM ${DB_PREFIX}project_todos WHERE status = 'offen' AND bearbeiten = 1 ORDER BY CASE priority WHEN 'kritisch' THEN 1 WHEN 'hoch' THEN 2 WHEN 'mittel' THEN 3 WHEN 'niedrig' THEN 4 END, created_at ASC LIMIT 1"
     local next_todo=$(execute_sql "$query")
     
-    if [ -n "$next_todo" ] && ! echo "$next_todo" | grep -q "^id"; then
-        local todo_id=$(echo "$next_todo" | cut -f1)
-        local todo_title=$(echo "$next_todo" | cut -f2)
+    if [ -n "$next_todo" ]; then
+        # Überspringe Header-Zeile und hole erste Daten-Zeile
+        local data_line=$(echo "$next_todo" | grep -v "^id" | head -1)
         
-        if [ -n "$todo_id" ] && [ "$todo_id" != "id" ]; then
-            log_message "🚀 Nächstes Todo gefunden: #$todo_id - $todo_title"
-            start_todo "$todo_id"
+        if [ -n "$data_line" ]; then
+            local todo_id=$(echo "$data_line" | cut -f1)
+            local todo_title=$(echo "$data_line" | cut -f2)
+            
+            if [ -n "$todo_id" ] && [ "$todo_id" != "id" ] && [ "$todo_id" -gt 0 ] 2>/dev/null; then
+                log_message "🚀 Nächstes Todo gefunden: #$todo_id - $todo_title"
+                start_todo "$todo_id"
+            else
+                log_message "💤 Keine offenen Todos gefunden"
+            fi
         else
-            log_message "💤 Keine offenen Todos gefunden"
+            log_message "💤 Keine offenen Todos mit bearbeiten=1 gefunden (nur Header)"
         fi
     else
-        log_message "💤 Keine offenen Todos mit bearbeiten=1 gefunden"
+        log_message "💤 Keine offenen Todos mit bearbeiten=1 gefunden (leeres Ergebnis)"
     fi
 }
 

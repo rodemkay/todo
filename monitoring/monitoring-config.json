@@ -1,0 +1,26 @@
+{
+    "monitoring": {
+        "enabled": true,
+        "interval_seconds": 5,
+        "alert_on_error": true,
+        "memory_threshold_mb": 50,
+        "cpu_threshold_percent": 80.0,
+        "response_time_threshold_ms": 1000.0
+    },
+    "queue": {
+        "max_queue_size": 1000,
+        "max_concurrent_workers": 3,
+        "rate_limit_per_second": 10,
+        "batch_size": 5,
+        "processing_timeout": 30.0
+    },
+    "logging": {
+        "max_file_size_mb": 50,
+        "max_age_days": 30,
+        "max_total_size_gb": 5.0,
+        "compression_enabled": true,
+        "archive_directory": "/tmp/webhook_logs_archive",
+        "cleanup_interval_hours": 6,
+        "log_levels_to_keep": ["ERROR", "WARNING", "CRITICAL"]
+    }
+}

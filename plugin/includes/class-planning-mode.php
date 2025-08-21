@@ -16,6 +16,11 @@ class Planning_Mode {
         add_action('wp_ajax_save_plan_html', [$this, 'ajax_save_plan_html']);
         add_action('wp_ajax_get_plan_html', [$this, 'ajax_get_plan_html']);
         add_action('wp_ajax_create_followup_todo', [$this, 'ajax_create_followup_todo']);
+        
+        // Neue AJAX-Handler für strukturierten Editor
+        add_action('wp_ajax_save_structured_plan', [$this, 'ajax_save_structured_plan']);
+        add_action('wp_ajax_generate_plan_preview', [$this, 'ajax_generate_plan_preview']);
+        add_action('wp_ajax_load_structured_plan_editor', [$this, 'ajax_load_structured_plan_editor']);
     }
     
     /**
@@ -253,5 +258,140 @@ class Planning_Mode {
             </script>
         </div>
         <?php
+    }
+    
+    /**
+     * AJAX handler für strukturierten Plan-Editor
+     */
+    public function ajax_save_structured_plan() {
+        check_ajax_referer('wp_project_todos_nonce', 'nonce');
+        
+        $todo_id = intval($_POST['todo_id']);
+        $plan_data = $_POST['plan_data'];
+        
+        if (!$todo_id || !$plan_data) {
+            wp_send_json_error(['message' => 'Fehlende Daten']);
+            return;
+        }
+        
+        global $wpdb;
+        $table = $wpdb->prefix . 'project_todos';
+        
+        // Plan-Parser laden
+        if (!class_exists('WP_Project_Todos\Plan_Parser')) {
+            require_once plugin_dir_path(__FILE__) . 'class-plan-parser.php';
+        }
+        $parser = new Plan_Parser();
+        
+        $plan_html = '';
+        $structure_json = '';
+        
+        if ($plan_data['mode'] === 'structured') {
+            // Strukturierte Daten zu HTML konvertieren
+            $structure = $plan_data['structure'];
+            $plan_html = $parser->structure_to_html($structure);
+            $structure_json = json_encode($structure, JSON_UNESCAPED_UNICODE);
+        } else {
+            // Direktes HTML
+            $plan_html = wp_kses_post($plan_data['html']);
+            // Versuche HTML zu strukturieren für Backup
+            $structure = $parser->parse_html_to_structure($plan_html);
+            $structure_json = json_encode($structure, JSON_UNESCAPED_UNICODE);
+        }
+        
+        $result = $wpdb->update(
+            $table,
+            [
+                'plan_html' => $plan_html,
+                'plan_structure' => $structure_json, // Neue Spalte für strukturierte Daten
+                'plan_created_at' => current_time('mysql'),
+                'is_planning_mode' => 1
+            ],
+            ['id' => $todo_id]
+        );
+        
+        if ($result !== false) {
+            wp_send_json_success([
+                'message' => 'Plan erfolgreich gespeichert',
+                'html' => $plan_html
+            ]);
+        } else {
+            wp_send_json_error(['message' => 'Fehler beim Speichern']);
+        }
+    }
+    
+    /**
+     * AJAX handler für Plan-Vorschau Generierung
+     */
+    public function ajax_generate_plan_preview() {
+        check_ajax_referer('wp_project_todos_nonce', 'nonce');
+        
+        $structure = $_POST['structure'];
+        
+        if (!$structure) {
+            wp_send_json_error(['message' => 'Keine Struktur-Daten erhalten']);
+            return;
+        }
+        
+        // Plan-Parser laden
+        if (!class_exists('WP_Project_Todos\Plan_Parser')) {
+            require_once plugin_dir_path(__FILE__) . 'class-plan-parser.php';
+        }
+        $parser = new Plan_Parser();
+        
+        // Struktur zu HTML konvertieren
+        $html = $parser->structure_to_html($structure);
+        
+        wp_send_json_success([
+            'html' => $html
+        ]);
+    }
+    
+    /**
+     * AJAX handler für Laden des strukturierten Editors
+     */
+    public function ajax_load_structured_plan_editor() {
+        check_ajax_referer('wp_project_todos_nonce', 'nonce');
+        
+        $todo_id = intval($_POST['todo_id']);
+        
+        if (!$todo_id) {
+            wp_send_json_error(['message' => 'Keine Todo-ID erhalten']);
+            return;
+        }
+        
+        $html = $this->render_structured_plan_editor($todo_id);
+        
+        wp_send_json_success([
+            'html' => $html
+        ]);
+    }
+    
+    /**
+     * Render strukturierten Plan-Editor
+     */
+    public function render_structured_plan_editor($todo_id) {
+        global $wpdb;
+        $table = $wpdb->prefix . 'project_todos';
+        
+        $todo = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM $table WHERE id = %d",
+            $todo_id
+        ));
+        
+        if (!$todo) {
+            return '<p>Todo nicht gefunden</p>';
+        }
+        
+        // Template für strukturierten Editor laden
+        $template_path = plugin_dir_path(__FILE__) . '../admin/views/structured-plan-editor.php';
+        
+        if (file_exists($template_path)) {
+            ob_start();
+            include $template_path;
+            return ob_get_clean();
+        } else {
+            return '<p>Editor-Template nicht gefunden: ' . $template_path . '</p>';
+        }
     }
 }

@@ -46,7 +46,7 @@ def ssh_command(cmd):
 
 def get_next_todo():
     """Hole nächstes Todo mit status='offen' und bearbeiten=1"""
-    query = f"SELECT id, title, description, status FROM {CONFIG['database']['table_prefix']}project_todos WHERE status='offen' AND bearbeiten=1 ORDER BY priority DESC, id ASC LIMIT 1"
+    query = f"SELECT id, title, description, status, mode, plan_approved FROM {CONFIG['database']['table_prefix']}project_todos WHERE status='offen' AND bearbeiten=1 ORDER BY priority DESC, id ASC LIMIT 1"
     
     cmd = f'wp db query "{query}"'
     output, code = ssh_command(cmd)
@@ -61,29 +61,61 @@ def get_next_todo():
                     'id': parts[0],
                     'title': parts[1],
                     'description': parts[2] if len(parts) > 2 else '',
-                    'status': parts[3] if len(parts) > 3 else 'offen'
+                    'status': parts[3] if len(parts) > 3 else 'offen',
+                    'mode': parts[4] if len(parts) > 4 else 'execute',
+                    'plan_approved': parts[5] if len(parts) > 5 else '0'
                 }
     return None
 
 def get_todo_by_id(todo_id):
     """Hole spezifisches Todo, unabhängig von Status"""
-    query = f"SELECT id, title, description, status, bearbeiten FROM {CONFIG['database']['table_prefix']}project_todos WHERE id={todo_id}"
+    # Einfache Query ohne komplexe Replacements
+    query = f"SELECT id, title, description, status, bearbeiten, mode, plan_approved FROM {CONFIG['database']['table_prefix']}project_todos WHERE id={todo_id}"
     
     cmd = f'wp db query "{query}"'
     output, code = ssh_command(cmd)
     
-    if code == 0 and output:
-        lines = output.strip().split('\n')
-        if len(lines) > 1:  # Header + mindestens eine Datenzeile
-            parts = lines[1].split('\t')
-            if len(parts) >= 5:
-                return {
-                    'id': parts[0],
-                    'title': parts[1],
-                    'description': parts[2] if len(parts) > 2 else '',
-                    'status': parts[3] if len(parts) > 3 else '',
-                    'bearbeiten': parts[4] if len(parts) > 4 else ''
-                }
+    # Debug-Output
+    if code != 0:
+        print(f"Debug: SSH command failed with code {code}")
+        return None
+        
+    if not output:
+        print("Debug: No output from query")
+        return None
+        
+    if output.startswith('Success:'):
+        print(f"Debug: Got success message instead of data: {output[:50]}")
+        return None
+    
+    # Verarbeite alle Zeilen als einen Block wegen möglicher Newlines in description
+    all_text = output.strip()
+    
+    # Finde die Position des Headers und überspringe ihn
+    if '\n' in all_text:
+        header_end = all_text.index('\n')
+        data_text = all_text[header_end+1:]
+        
+        # Versuche Tab-getrennte Felder zu parsen
+        # Bei multiline descriptions müssen wir vorsichtig sein
+        parts = data_text.split('\t')
+        
+        if len(parts) >= 5:  # Mindestens id, title, description, status, bearbeiten
+            # Bereinige description von Newlines
+            desc = parts[2] if len(parts) > 2 else ''
+            desc = desc.replace('\\n', ' ').replace('\n', ' ').replace('\\r', ' ')[:200]
+            
+            return {
+                'id': parts[0],
+                'title': parts[1],
+                'description': desc,
+                'status': parts[3] if len(parts) > 3 else '',
+                'bearbeiten': parts[4] if len(parts) > 4 else '',
+                'mode': parts[5] if len(parts) > 5 else 'execute',
+                'plan_approved': parts[6] if len(parts) > 6 else '0'
+            }
+    
+    print(f"Debug: Could not parse output. First 100 chars: {output[:100]}")
     return None
 
 def set_todo_status(todo_id, status):
@@ -128,6 +160,15 @@ WHERE id={todo_id}"""
 
 def load_todo(todo_id=None):
     """Lade ein Todo (nächstes oder spezifisches)"""
+    # Import planning mode handler
+    try:
+        import sys
+        sys.path.append('/home/rodemkay/www/react/todo/hooks')
+        from planning_mode import get_mode_instruction, generate_plan_html
+    except ImportError:
+        get_mode_instruction = None
+        generate_plan_html = None
+    
     # Prüfe ob bereits ein Todo aktiv ist
     if Path(CONFIG["paths"]["current_todo"]).exists():
         with open(CONFIG["paths"]["current_todo"]) as f:
@@ -151,6 +192,10 @@ def load_todo(todo_id=None):
             print(f"\n📋 Loading Todo #{todo['id']}: {todo['title']}")
             print(f"Description: {todo['description'][:200]}...")
             print(f"Current Status: {todo['status']}")
+            
+            # Zeige Mode-spezifische Anweisungen
+            if get_mode_instruction:
+                print(get_mode_instruction(todo))
             
             # Auf in_progress setzen
             set_todo_status(todo['id'], 'in_progress')
@@ -180,6 +225,10 @@ def load_todo(todo_id=None):
             print(f"\n📋 Loading Todo #{todo['id']}: {todo['title']}")
             print(f"Description: {todo['description'][:200]}...")
             print(f"Current Status: {todo.get('status', 'offen')}")
+            
+            # Zeige Mode-spezifische Anweisungen
+            if get_mode_instruction:
+                print(get_mode_instruction(todo))
             
             # Nur wenn status noch 'offen' ist, auf in_progress setzen
             if todo.get('status') == 'offen':

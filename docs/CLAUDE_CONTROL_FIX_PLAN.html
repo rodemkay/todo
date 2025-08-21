@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Control - Problemanalyse & Lösungsplan</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #2271b1;
+            border-bottom: 3px solid #2271b1;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #135e96;
+            margin-top: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .problem-box {
+            background: #fff;
+            border-left: 4px solid #dc3545;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .solution-box {
+            background: #fff;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .test-command {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .step {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #2271b1;
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        .status-active { color: #28a745; font-weight: bold; }
+        .status-error { color: #dc3545; font-weight: bold; }
+        .status-warning { color: #ffc107; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🎮 Claude Control - Problemanalyse & Lösungsplan</h1>
+    
+    <h2>🔍 Problem-Analyse</h2>
+    
+    <div class="problem-box">
+        <h3>Problem 1: Verbindung schlägt fehl</h3>
+        <p><strong>Symptom:</strong> SSH-Verbindung zu 100.89.207.122 funktioniert nicht</p>
+        <p><strong>Mögliche Ursachen:</strong></p>
+        <ul>
+            <li>SSH-Keys nicht konfiguriert zwischen Hetzner → Ryzen</li>
+            <li>Falscher SSH-User oder Host</li>
+            <li>Firewall blockiert Verbindung</li>
+            <li>Kitty Socket nicht verfügbar</li>
+        </ul>
+    </div>
+    
+    <div class="problem-box">
+        <h3>Problem 2: Kitty Remote Control nicht aktiv</h3>
+        <p><strong>Symptom:</strong> kitty @ Befehle funktionieren nicht</p>
+        <p><strong>Mögliche Ursachen:</strong></p>
+        <ul>
+            <li>Kitty nicht mit --listen-on gestartet</li>
+            <li>Socket-Pfad stimmt nicht überein</li>
+            <li>Permissions auf Socket-Datei</li>
+        </ul>
+    </div>
+    
+    <div class="problem-box">
+        <h3>Problem 3: Bypass Permissions nicht implementiert</h3>
+        <p><strong>Symptom:</strong> Feature fehlt in der UI</p>
+        <p><strong>Lösung:</strong> Muss zur Claude Control Page hinzugefügt werden</p>
+    </div>
+
+    <h2>✅ Lösungsplan</h2>
+    
+    <div class="step">
+        <h3><span class="step-number">1</span> Verbindungs-Diagnose</h3>
+        <p>Teste die SSH-Verbindung und Kitty-Kommunikation:</p>
+        
+        <div class="test-command">
+            # Test 1: SSH-Verbindung von Hetzner zu Ryzen
+            ssh rodemkay@159.69.157.54 "ssh rodemkay@100.89.207.122 'echo Connection OK'"
+        </div>
+        
+        <div class="test-command">
+            # Test 2: Kitty Socket prüfen
+            ssh rodemkay@100.89.207.122 "ls -la /tmp/kitty-*"
+        </div>
+        
+        <div class="test-command">
+            # Test 3: Kitty Remote Control testen
+            ssh rodemkay@100.89.207.122 "kitty @ ls"
+        </div>
+    </div>
+    
+    <div class="step">
+        <h3><span class="step-number">2</span> SSH-Key Setup (falls nötig)</h3>
+        <p>Erstelle SSH-Key für passwortlose Verbindung Hetzner → Ryzen:</p>
+        
+        <div class="code-block">
+# Auf Hetzner Server:
+ssh-keygen -t ed25519 -f ~/.ssh/id_ryzen -N ""
+ssh-copy-id -i ~/.ssh/id_ryzen.pub rodemkay@100.89.207.122
+
+# SSH Config ergänzen:
+cat >> ~/.ssh/config << EOF
+Host ryzen
+    HostName 100.89.207.122
+    User rodemkay
+    IdentityFile ~/.ssh/id_ryzen
+EOF</div>
+    </div>
+    
+    <div class="step">
+        <h3><span class="step-number">3</span> Kitty Configuration Fix</h3>
+        <p>Stelle sicher, dass Kitty mit Remote Control läuft:</p>
+        
+        <div class="code-block">
+# Start-Script anpassen:
+#!/bin/bash
+# /home/rodemkay/.local/bin/kitty_claude_fresh.sh
+
+# Mit Socket starten
+kitty --listen-on unix:/tmp/kitty-$USER \
+      --session ~/www/react/todo/kitty-session.conf \
+      --title "claude" \
+      bash -c "tmux new-session -s claude || tmux attach -t claude"</div>
+        
+        <div class="warning">
+            <strong>⚠️ Wichtig:</strong> Kitty muss mit --listen-on gestartet werden, sonst funktioniert Remote Control nicht!
+        </div>
+    </div>
+    
+    <div class="step">
+        <h3><span class="step-number">4</span> PHP Code Fixes</h3>
+        <p>Anpassungen in claude-control.php:</p>
+        
+        <div class="code-block">
+// Verbindungs-Test hinzufügen
+public function test_connection() {
+    // Direkte Verbindung ohne SSH-Hop
+    $test = shell_exec("timeout 5 ssh rodemkay@100.89.207.122 'echo OK' 2>&1");
+    
+    if (trim($test) === 'OK') {
+        return ['status' => 'success', 'message' => 'Connection OK'];
+    } else {
+        // Fallback: Lokale Ausführung wenn auf Ryzen
+        if (gethostname() === 'ryzen-server') {
+            return ['status' => 'local', 'message' => 'Running locally'];
+        }
+        return ['status' => 'error', 'message' => $test];
+    }
+}
+
+// Kitty Befehle mit korrektem Socket
+private function send_kitty_command($command) {
+    $socket = "unix:/tmp/kitty-rodemkay";
+    
+    // Versuche direkt
+    $result = shell_exec("kitty @ --to $socket $command 2>&1");
+    
+    // Falls fehlschlägt, versuche über SSH
+    if (empty($result) || strpos($result, 'error') !== false) {
+        $result = shell_exec("ssh rodemkay@100.89.207.122 'kitty @ --to $socket $command' 2>&1");
+    }
+    
+    return $result;
+}</div>
+    </div>
+    
+    <div class="step">
+        <h3><span class="step-number">5</span> Bypass Permissions Feature</h3>
+        <p>Neue UI-Komponente für Bypass Permissions:</p>
+        
+        <div class="code-block">
+<!-- In claude-control.php Template -->
+<div class="control-panel">
+    <h2>🔓 Bypass Permissions</h2>
+    <div class="permission-presets">
+        <button onclick="setBypassPermissions('Bash(ssh:*),Read(/etc/*)')">
+            SSH & System Files
+        </button>
+        <button onclick="setBypassPermissions('Write(/var/*),Bash(git:*)')">
+            Var & Git
+        </button>
+        <button onclick="setBypassPermissions('Bash(*),Read(*),Write(*)')">
+            Full Access (Dangerous!)
+        </button>
+    </div>
+    <div style="margin-top: 10px;">
+        <input type="text" id="custom-permissions" 
+               placeholder="Custom: Bash(ssh:*),Read(/path/*)" 
+               style="width: 100%;">
+        <button onclick="setCustomBypassPermissions()">Apply Custom</button>
+    </div>
+</div>
+
+<script>
+function setBypassPermissions(permissions) {
+    if (!confirm('Apply bypass permissions: ' + permissions + '?')) return;
+    
+    jQuery.post(ajaxurl, {
+        action: 'claude_set_bypass',
+        permissions: permissions,
+        _wpnonce: '<?php echo wp_create_nonce('claude_control'); ?>'
+    }, function(response) {
+        if (response.success) {
+            showNotice('Bypass permissions applied', 'success');
+            setTimeout(updateStatus, 2000);
+        }
+    });
+}
+</script></div>
+    </div>
+    
+    <h2>🧪 Test-Strategie</h2>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Test</th>
+                <th>Kommando</th>
+                <th>Erwartetes Ergebnis</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>SSH Verbindung</td>
+                <td><code>ssh rodemkay@100.89.207.122 echo OK</code></td>
+                <td>OK</td>
+                <td class="status-warning">Pending</td>
+            </tr>
+            <tr>
+                <td>Kitty Socket</td>
+                <td><code>ls /tmp/kitty-*</code></td>
+                <td>Socket-Datei vorhanden</td>
+                <td class="status-warning">Pending</td>
+            </tr>
+            <tr>
+                <td>Kitty Remote</td>
+                <td><code>kitty @ ls</code></td>
+                <td>Window-Liste</td>
+                <td class="status-warning">Pending</td>
+            </tr>
+            <tr>
+                <td>Claude Process</td>
+                <td><code>pgrep -f claude</code></td>
+                <td>Process ID</td>
+                <td class="status-warning">Pending</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h2>🚀 Implementierungs-Reihenfolge</h2>
+    
+    <div class="solution-box">
+        <h3>Phase 1: Diagnose (5 Min)</h3>
+        <ol>
+            <li>Teste SSH-Verbindung Hetzner → Ryzen</li>
+            <li>Prüfe Kitty Socket-Verfügbarkeit</li>
+            <li>Verifiziere Claude Session läuft</li>
+        </ol>
+    </div>
+    
+    <div class="solution-box">
+        <h3>Phase 2: Connection Fix (10 Min)</h3>
+        <ol>
+            <li>SSH-Keys einrichten (falls nötig)</li>
+            <li>Kitty mit --listen-on neu starten</li>
+            <li>Socket-Pfad in PHP anpassen</li>
+        </ol>
+    </div>
+    
+    <div class="solution-box">
+        <h3>Phase 3: Feature Implementation (15 Min)</h3>
+        <ol>
+            <li>Bypass Permissions UI hinzufügen</li>
+            <li>AJAX Handler implementieren</li>
+            <li>Test Connection Button</li>
+            <li>Error Handling verbessern</li>
+        </ol>
+    </div>
+    
+    <div class="solution-box">
+        <h3>Phase 4: Testing (10 Min)</h3>
+        <ol>
+            <li>Alle Buttons testen</li>
+            <li>Mode-Switching verifizieren</li>
+            <li>Bypass Permissions testen</li>
+            <li>Terminal Output prüfen</li>
+        </ol>
+    </div>
+    
+    <h2>💡 Alternative Lösung: Lokale Ausführung</h2>
+    
+    <div class="warning">
+        <h3>Falls SSH nicht funktioniert:</h3>
+        <p>Da WordPress auf Hetzner läuft und Claude auf Ryzen, könnte die Kommunikation auch über:</p>
+        <ul>
+            <li><strong>WebSocket:</strong> Real-time bidirektionale Kommunikation</li>
+            <li><strong>REST API:</strong> HTTP-basierte Befehle</li>
+            <li><strong>Shared File:</strong> Über gemountetes Verzeichnis</li>
+            <li><strong>Redis Queue:</strong> Message Queue System</li>
+        </ul>
+    </div>
+    
+    <div class="success">
+        <h3>✅ Erwartetes Endergebnis:</h3>
+        <ul>
+            <li>Claude Control verbindet erfolgreich</li>
+            <li>Alle Buttons funktionieren</li>
+            <li>Terminal Output wird angezeigt</li>
+            <li>Mode-Switching funktioniert</li>
+            <li>Bypass Permissions verfügbar</li>
+            <li>Status-Updates alle 10 Sekunden</li>
+        </ul>
+    </div>
+    
+    <h2>📝 Nächste Schritte</h2>
+    
+    <div style="background: #e8f4fd; border: 2px solid #2196f3; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="margin-top: 0;">Empfohlene Vorgehensweise:</h3>
+        <ol>
+            <li><strong>Führe die Diagnose-Tests aus</strong> - Identifiziere das Hauptproblem</li>
+            <li><strong>Entscheide über Verbindungsmethode</strong> - SSH oder Alternative</li>
+            <li><strong>Implementiere Schritt für Schritt</strong> - Teste nach jedem Schritt</li>
+            <li><strong>Dokumentiere funktionierende Konfiguration</strong></li>
+        </ol>
+    </div>
+</body>
+</html>

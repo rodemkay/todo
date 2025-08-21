@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning Mode Implementation - Todo System</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #2271b1;
+            border-bottom: 3px solid #2271b1;
+            padding-bottom: 15px;
+            font-size: 2.5em;
+        }
+        h2 {
+            color: #135e96;
+            margin-top: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8em;
+        }
+        .implementation-card {
+            background: #f8f9fa;
+            border-left: 5px solid #2271b1;
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .feature-box {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            border: 2px solid #2196f3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 15px 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .code-block .comment {
+            color: #6a9955;
+        }
+        .code-block .keyword {
+            color: #569cd6;
+        }
+        .code-block .string {
+            color: #ce9178;
+        }
+        .workflow-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .workflow-step {
+            background: white;
+            border: 2px solid #dee2e6;
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            transition: transform 0.3s;
+        }
+        .workflow-step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        .step-number {
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        .ui-mockup {
+            background: white;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .checkbox-group {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .checkbox-item input {
+            margin-right: 10px;
+            width: 20px;
+            height: 20px;
+        }
+        .checkbox-item label {
+            font-size: 1.1em;
+        }
+        .plan-output-example {
+            background: #f8f9fa;
+            border: 2px dashed #6c757d;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .success-box {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .info-box {
+            background: #d1ecf1;
+            border: 2px solid #17a2b8;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        .badge-plan {
+            background: #ffc107;
+            color: #000;
+        }
+        .badge-execute {
+            background: #28a745;
+            color: white;
+        }
+        .badge-hybrid {
+            background: linear-gradient(135deg, #ffc107 0%, #28a745 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Planning Mode Implementation für Todo System</h1>
+        
+        <div class="info-box">
+            <h3>💡 Konzept-Übersicht</h3>
+            <p><strong>Ziel:</strong> Ein Planungsmodus, der es ermöglicht, Aufgaben erst zu planen bevor sie ausgeführt werden. Der Plan wird automatisch als formatierter HTML-Output gespeichert.</p>
+            <ul>
+                <li>✅ Claude erstellt detaillierte Pläne ohne direkte Ausführung</li>
+                <li>✅ Pläne werden als HTML mit schönem Design gespeichert</li>
+                <li>✅ User kann Plan reviewen und dann zur Ausführung freigeben</li>
+                <li>✅ Automatische Integration in claude_html_output</li>
+            </ul>
+        </div>
+
+        <h2>📋 Datenbank-Erweiterung</h2>
+        
+        <div class="implementation-card">
+            <h3>Neue Felder in stage_project_todos</h3>
+            <div class="code-block">
+<span class="comment">-- Neue Spalten für Planning Mode</span>
+<span class="keyword">ALTER TABLE</span> stage_project_todos
+<span class="keyword">ADD COLUMN</span> mode <span class="keyword">ENUM</span>(<span class="string">'plan'</span>, <span class="string">'execute'</span>, <span class="string">'hybrid'</span>) <span class="keyword">DEFAULT</span> <span class="string">'execute'</span> <span class="keyword">AFTER</span> bearbeiten,
+<span class="keyword">ADD COLUMN</span> plan_approved <span class="keyword">TINYINT</span>(1) <span class="keyword">DEFAULT</span> 0 <span class="keyword">AFTER</span> mode,
+<span class="keyword">ADD COLUMN</span> plan_created_at <span class="keyword">DATETIME</span> <span class="keyword">NULL</span> <span class="keyword">AFTER</span> plan_approved,
+<span class="keyword">ADD COLUMN</span> execution_started_at <span class="keyword">DATETIME</span> <span class="keyword">NULL</span> <span class="keyword">AFTER</span> plan_created_at;
+
+<span class="comment">-- Index für schnelle Mode-Filterung</span>
+<span class="keyword">CREATE INDEX</span> idx_mode <span class="keyword">ON</span> stage_project_todos(mode);</div>
+        </div>
+
+        <h2>🎨 UI/UX Implementation</h2>
+        
+        <div class="ui-mockup">
+            <h3>📝 Neue Aufgabe erstellen - Mode Selection</h3>
+            <div class="checkbox-group">
+                <h4>Ausführungsmodus wählen:</h4>
+                <div class="checkbox-item">
+                    <input type="radio" name="mode" id="mode_plan" value="plan">
+                    <label for="mode_plan">
+                        <span class="badge badge-plan">PLAN</span>
+                        Nur Planung - Claude erstellt einen detaillierten Plan ohne Ausführung
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="radio" name="mode" id="mode_execute" value="execute" checked>
+                    <label for="mode_execute">
+                        <span class="badge badge-execute">EXECUTE</span>
+                        Direkte Ausführung - Claude führt die Aufgabe sofort aus
+                    </label>
+                </div>
+                <div class="checkbox-item">
+                    <input type="radio" name="mode" id="mode_hybrid" value="hybrid">
+                    <label for="mode_hybrid">
+                        <span class="badge badge-hybrid">HYBRID</span>
+                        Plan + Ausführung - Erst planen, dann nach Freigabe ausführen
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <h2>🔄 Workflow Implementation</h2>
+        
+        <div class="workflow-container">
+            <div class="workflow-step">
+                <div class="step-number">1</div>
+                <h4>Aufgabe mit Mode erstellen</h4>
+                <p>User wählt beim Erstellen den Modus:</p>
+                <ul>
+                    <li>Plan Mode</li>
+                    <li>Execute Mode</li>
+                    <li>Hybrid Mode</li>
+                </ul>
+            </div>
+            
+            <div class="workflow-step">
+                <div class="step-number">2</div>
+                <h4>Claude Processing</h4>
+                <p>Je nach Mode:</p>
+                <ul>
+                    <li><strong>Plan:</strong> Erstellt nur Plan-HTML</li>
+                    <li><strong>Execute:</strong> Führt direkt aus</li>
+                    <li><strong>Hybrid:</strong> Plan → Review → Execute</li>
+                </ul>
+            </div>
+            
+            <div class="workflow-step">
+                <div class="step-number">3</div>
+                <h4>HTML Output Generation</h4>
+                <p>Automatische HTML-Erstellung:</p>
+                <ul>
+                    <li>Formatierter Plan</li>
+                    <li>Schönes Design</li>
+                    <li>Direkt in DB</li>
+                </ul>
+            </div>
+            
+            <div class="workflow-step">
+                <div class="step-number">4</div>
+                <h4>Review & Approval</h4>
+                <p>Bei Plan/Hybrid Mode:</p>
+                <ul>
+                    <li>User reviewt Plan</li>
+                    <li>Kann freigeben</li>
+                    <li>Oder anpassen</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>💻 PHP Implementation</h2>
+        
+        <div class="implementation-card">
+            <h3>new-todo.php Erweiterung</h3>
+            <div class="code-block">
+<span class="comment">// In admin/new-todo.php hinzufügen</span>
+&lt;div class="form-group mode-selection"&gt;
+    &lt;label&gt;Ausführungsmodus:&lt;/label&gt;
+    &lt;div class="mode-options"&gt;
+        &lt;label class="mode-option"&gt;
+            &lt;input type="radio" name="mode" value="plan"&gt;
+            &lt;span class="mode-label plan"&gt;
+                &lt;i class="dashicons dashicons-clipboard"&gt;&lt;/i&gt;
+                Nur Planung
+            &lt;/span&gt;
+            &lt;small&gt;Claude erstellt einen detaillierten Plan ohne Ausführung&lt;/small&gt;
+        &lt;/label&gt;
+        
+        &lt;label class="mode-option"&gt;
+            &lt;input type="radio" name="mode" value="execute" checked&gt;
+            &lt;span class="mode-label execute"&gt;
+                &lt;i class="dashicons dashicons-controls-play"&gt;&lt;/i&gt;
+                Direkte Ausführung
+            &lt;/span&gt;
+            &lt;small&gt;Claude führt die Aufgabe sofort aus&lt;/small&gt;
+        &lt;/label&gt;
+        
+        &lt;label class="mode-option"&gt;
+            &lt;input type="radio" name="mode" value="hybrid"&gt;
+            &lt;span class="mode-label hybrid"&gt;
+                &lt;i class="dashicons dashicons-image-filter"&gt;&lt;/i&gt;
+                Hybrid (Plan → Execute)
+            &lt;/span&gt;
+            &lt;small&gt;Erst planen, dann nach Review ausführen&lt;/small&gt;
+        &lt;/label&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+
+<span class="comment">// CSS für Mode Selection</span>
+&lt;style&gt;
+.mode-selection {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.mode-options {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.mode-option {
+    display: block;
+    padding: 15px;
+    background: white;
+    border: 2px solid #dee2e6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.mode-option:hover {
+    border-color: #2271b1;
+    transform: translateY(-2px);
+}
+
+.mode-option input[type="radio"]:checked + .mode-label {
+    font-weight: bold;
+    color: #2271b1;
+}
+
+.mode-label.plan { color: #ffc107; }
+.mode-label.execute { color: #28a745; }
+.mode-label.hybrid { 
+    background: linear-gradient(90deg, #ffc107 0%, #28a745 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+&lt;/style&gt;</div>
+        </div>
+
+        <h2>🤖 Claude Integration</h2>
+        
+        <div class="implementation-card">
+            <h3>Hook System Anpassung</h3>
+            <div class="code-block">
+<span class="comment">#!/usr/bin/env python3</span>
+<span class="comment"># todo_manager.py Erweiterung</span>
+
+<span class="keyword">def</span> <span class="string">process_todo</span>(todo_id):
+    <span class="comment"># Hole Todo mit Mode</span>
+    todo = get_todo_from_db(todo_id)
+    mode = todo.get(<span class="string">'mode'</span>, <span class="string">'execute'</span>)
+    
+    <span class="keyword">if</span> mode == <span class="string">'plan'</span>:
+        <span class="comment"># Nur Planung - setze Claude in Plan-Mode</span>
+        instruction = f<span class="string">"""
+        PLANNING MODE AKTIVIERT!
+        
+        Erstelle einen detaillierten Plan für diese Aufgabe.
+        FÜHRE NICHTS AUS, nur planen!
+        
+        Der Plan soll enthalten:
+        1. Analyse der Anforderungen
+        2. Lösungsansätze
+        3. Implementierungsschritte
+        4. Potenzielle Probleme
+        5. Zeitschätzung
+        
+        Erstelle den Plan als formatiertes HTML und speichere ihn
+        direkt in claude_html_output.
+        """</span>
+        
+    <span class="keyword">elif</span> mode == <span class="string">'hybrid'</span>:
+        <span class="comment"># Hybrid - prüfe ob Plan approved</span>
+        <span class="keyword">if</span> <span class="keyword">not</span> todo.get(<span class="string">'plan_approved'</span>):
+            <span class="comment"># Erste Phase: Planung</span>
+            instruction = <span class="string">"[HYBRID MODE - PHASE 1: PLANNING]"</span>
+        <span class="keyword">else</span>:
+            <span class="comment"># Zweite Phase: Ausführung</span>
+            instruction = <span class="string">"[HYBRID MODE - PHASE 2: EXECUTION]"</span>
+    
+    <span class="keyword">else</span>:
+        <span class="comment"># Standard Execute Mode</span>
+        instruction = <span class="string">"[EXECUTE MODE]"</span>
+    
+    <span class="keyword">return</span> instruction</div>
+        </div>
+
+        <h2>📊 Dashboard Erweiterungen</h2>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th>Beschreibung</th>
+                    <th>Implementation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Mode Badge</td>
+                    <td>Zeigt den Modus jeder Aufgabe</td>
+                    <td>Farbige Badges: 🟡 Plan, 🟢 Execute, 🔵 Hybrid</td>
+                </tr>
+                <tr>
+                    <td>Approve Button</td>
+                    <td>Bei Plan-Mode zum Freigeben</td>
+                    <td>Nur sichtbar wenn mode='plan' und plan_approved=0</td>
+                </tr>
+                <tr>
+                    <td>Convert Button</td>
+                    <td>Plan → Execute konvertieren</td>
+                    <td>Ändert mode von 'plan' zu 'execute'</td>
+                </tr>
+                <tr>
+                    <td>Plan Preview</td>
+                    <td>Zeigt Plan inline im Dashboard</td>
+                    <td>Expandable Section mit HTML-Output</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>🎨 HTML Plan Template</h2>
+        
+        <div class="plan-output-example">
+            <h3>Beispiel Plan-Output Format</h3>
+            <div class="code-block">
+<span class="comment">&lt;!-- Automatisch generiertes Plan-Template --&gt;</span>
+&lt;div class="planning-document"&gt;
+    &lt;header class="plan-header"&gt;
+        &lt;h1&gt;📋 Implementierungsplan: [TASK TITLE]&lt;/h1&gt;
+        &lt;div class="plan-meta"&gt;
+            &lt;span&gt;Erstellt: [DATE]&lt;/span&gt;
+            &lt;span&gt;Geschätzte Zeit: [ESTIMATE]&lt;/span&gt;
+            &lt;span&gt;Komplexität: [LEVEL]&lt;/span&gt;
+        &lt;/div&gt;
+    &lt;/header&gt;
+    
+    &lt;section class="requirements"&gt;
+        &lt;h2&gt;📌 Anforderungsanalyse&lt;/h2&gt;
+        &lt;ul&gt;
+            &lt;li&gt;[Requirement 1]&lt;/li&gt;
+            &lt;li&gt;[Requirement 2]&lt;/li&gt;
+        &lt;/ul&gt;
+    &lt;/section&gt;
+    
+    &lt;section class="approach"&gt;
+        &lt;h2&gt;🎯 Lösungsansatz&lt;/h2&gt;
+        &lt;div class="approach-cards"&gt;
+            [Approach Details]
+        &lt;/div&gt;
+    &lt;/section&gt;
+    
+    &lt;section class="implementation"&gt;
+        &lt;h2&gt;🔨 Implementierungsschritte&lt;/h2&gt;
+        &lt;ol class="steps"&gt;
+            &lt;li&gt;[Step 1]&lt;/li&gt;
+            &lt;li&gt;[Step 2]&lt;/li&gt;
+        &lt;/ol&gt;
+    &lt;/section&gt;
+    
+    &lt;section class="risks"&gt;
+        &lt;h2&gt;⚠️ Potenzielle Risiken&lt;/h2&gt;
+        [Risk Analysis]
+    &lt;/section&gt;
+    
+    &lt;footer class="plan-footer"&gt;
+        &lt;button class="approve-plan"&gt;✅ Plan Freigeben&lt;/button&gt;
+        &lt;button class="modify-plan"&gt;📝 Plan Anpassen&lt;/button&gt;
+    &lt;/footer&gt;
+&lt;/div&gt;</div>
+        </div>
+
+        <h2>🚀 Implementation Steps</h2>
+        
+        <div class="success-box">
+            <h3>✅ Schritt-für-Schritt Implementierung</h3>
+            <ol>
+                <li><strong>Datenbank erweitern</strong>
+                    <ul>
+                        <li>Neue Spalten hinzufügen (mode, plan_approved, etc.)</li>
+                        <li>Index erstellen für Performance</li>
+                    </ul>
+                </li>
+                <li><strong>UI in new-todo.php</strong>
+                    <ul>
+                        <li>Mode-Selection Radio Buttons</li>
+                        <li>CSS für schönes Design</li>
+                        <li>JavaScript für Interaktivität</li>
+                    </ul>
+                </li>
+                <li><strong>Backend-Logic</strong>
+                    <ul>
+                        <li>Mode beim Speichern verarbeiten</li>
+                        <li>Plan-HTML automatisch generieren</li>
+                        <li>Status-Management anpassen</li>
+                    </ul>
+                </li>
+                <li><strong>Hook-System Update</strong>
+                    <ul>
+                        <li>Mode-Detection in todo_manager.py</li>
+                        <li>Conditional Instructions für Claude</li>
+                        <li>HTML-Output Handling</li>
+                    </ul>
+                </li>
+                <li><strong>Dashboard-Features</strong>
+                    <ul>
+                        <li>Mode-Badges anzeigen</li>
+                        <li>Approve/Convert Buttons</li>
+                        <li>Plan-Preview Integration</li>
+                    </ul>
+                </li>
+            </ol>
+        </div>
+
+        <h2>💡 Vorteile des Planning Mode</h2>
+        
+        <div class="feature-box">
+            <h3>🎯 Key Benefits</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div>
+                    <h4>✅ Für User</h4>
+                    <ul>
+                        <li>Volle Kontrolle über Ausführung</li>
+                        <li>Plan-Review vor Umsetzung</li>
+                        <li>Bessere Transparenz</li>
+                        <li>Risiko-Minimierung</li>
+                        <li>Iterative Verbesserung</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4>✅ Für Claude</h4>
+                    <ul>
+                        <li>Strukturierte Herangehensweise</li>
+                        <li>Klare Trennung Plan/Execute</li>
+                        <li>Bessere Dokumentation</li>
+                        <li>Weniger Fehler</li>
+                        <li>Nachvollziehbare Entscheidungen</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-top: 40px;">
+            <h2 style="color: white; margin-top: 0;">🎉 Zusammenfassung</h2>
+            <p style="font-size: 1.2em; line-height: 1.8;">
+                Der Planning Mode erweitert das Todo-System um eine wichtige Funktion: Die Möglichkeit, 
+                Aufgaben erst zu planen bevor sie ausgeführt werden. Dies gibt mehr Kontrolle, 
+                Transparenz und Sicherheit bei komplexen Aufgaben.
+            </p>
+            <p style="font-size: 1.1em;">
+                <strong>Geschätzter Aufwand:</strong> 2-3 Stunden für vollständige Implementation<br>
+                <strong>Priorität:</strong> Hoch - verbessert Workflow signifikant<br>
+                <strong>Komplexität:</strong> Mittel - hauptsächlich UI und Logic-Erweiterungen
+            </p>
+        </div>
+    </div>
+</body>
+</html>

@@ -27,8 +27,18 @@ class Admin {
         wp_enqueue_script('wp-project-todos-admin', WP_PROJECT_TODOS_PLUGIN_URL . 'admin/js/admin.js', ['jquery'], WP_PROJECT_TODOS_VERSION, true);
         wp_enqueue_script('wp-project-todos-wsj-dashboard', WP_PROJECT_TODOS_PLUGIN_URL . 'admin/js/wsj-dashboard.js', ['jquery'], WP_PROJECT_TODOS_VERSION, true);
         
+        // Strukturierter Plan-Editor JS (immer laden für bessere UX)
+        wp_enqueue_script('wp-project-todos-structured-editor', WP_PROJECT_TODOS_PLUGIN_URL . 'admin/js/structured-plan-editor.js', ['jquery'], WP_PROJECT_TODOS_VERSION, true);
+        
         // Localize script for WSJ Dashboard AJAX
         wp_localize_script('wp-project-todos-wsj-dashboard', 'wpProjectTodosNonce', wp_create_nonce('send_todo_to_claude'));
+        
+        // Global script localization für alle Plan-Editor Features
+        wp_localize_script('wp-project-todos-structured-editor', 'wpProjectTodos', [
+            'ajaxurl' => admin_url('admin-ajax.php'),
+            'nonce' => wp_create_nonce('wp_project_todos_nonce'),
+            'plugin_url' => WP_PROJECT_TODOS_PLUGIN_URL
+        ]);
         
         // Planning Mode JS
         if (isset($_GET['page']) && $_GET['page'] === 'wp-project-todos-new') {
@@ -1118,7 +1128,33 @@ function toggleSelectedClaude() {
                         <th><label><?php _e('Planungsmodus', 'wp-project-todos'); ?></label></th>
                         <td>
                             <?php if ($todo->is_planning_mode && !empty($todo->plan_html)): ?>
-                                <?php $planning_mode->render_plan_viewer($todo->id); ?>
+                                <div class="plan-editor-integration">
+                                    <div class="plan-actions-header">
+                                        <h3>📋 Claude Plan verfügbar</h3>
+                                        <div class="plan-action-buttons">
+                                            <button type="button" 
+                                                    id="open-structured-editor" 
+                                                    class="button button-primary"
+                                                    data-todo-id="<?php echo $todo->id; ?>">
+                                                📝 Plan bearbeiten
+                                            </button>
+                                            <button type="button" 
+                                                    id="view-plan-only" 
+                                                    class="button button-secondary">
+                                                👀 Plan anzeigen
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="plan-display-area" style="display: none;">
+                                        <?php $planning_mode->render_plan_viewer($todo->id); ?>
+                                    </div>
+                                    
+                                    <!-- Container für strukturierten Editor -->
+                                    <div id="structured-editor-container" style="display: none;">
+                                        <!-- Wird via AJAX geladen -->
+                                    </div>
+                                </div>
                             <?php elseif ($todo->is_planning_mode): ?>
                                 <div style="background: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107;">
                                     <p><strong>⏳ Planungsmodus aktiv</strong></p>

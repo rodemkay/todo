@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webhook System Monitor - Real-time Dashboard</title>
+    <style>
+        :root {
+            --bg-dark: #1a1a1a;
+            --bg-card: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --success: #4ade80;
+            --warning: #fbbf24;
+            --error: #ef4444;
+            --info: #3b82f6;
+            --border: #404040;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            font-family: 'SF Pro Display', -apple-system, system-ui, sans-serif;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--info), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .status-card {
+            flex: 1;
+            min-width: 200px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .status-card.healthy { border-left: 4px solid var(--success); }
+        .status-card.warning { border-left: 4px solid var(--warning); }
+        .status-card.error { border-left: 4px solid var(--error); }
+
+        .status-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .status-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid var(--border);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .metric-label {
+            color: var(--text-secondary);
+        }
+
+        .metric-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .trend-up { color: var(--error); }
+        .trend-down { color: var(--success); }
+        .trend-stable { color: var(--text-secondary); }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #333;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .progress-fill.healthy { background: var(--success); }
+        .progress-fill.warning { background: var(--warning); }
+        .progress-fill.critical { background: var(--error); }
+
+        .alert-item {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .alert-item.warning {
+            background: rgba(251, 191, 36, 0.1);
+            border-color: var(--warning);
+        }
+
+        .alert-timestamp {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+        }
+
+        .alert-message {
+            font-weight: 500;
+        }
+
+        .refresh-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .refresh-info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            background: var(--info);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #2563eb;
+        }
+
+        button.secondary {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+        }
+
+        button.secondary:hover {
+            background: #404040;
+        }
+
+        .chart-container {
+            height: 200px;
+            background: #1f1f1f;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-secondary);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+
+        .error {
+            color: var(--error);
+            text-align: center;
+            padding: 20px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            border: 1px solid var(--error);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .status-bar {
+                flex-direction: column;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+
+        .auto-refresh-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .perf-metric {
+            text-align: center;
+            padding: 15px;
+            background: #1f1f1f;
+            border-radius: 8px;
+        }
+
+        .perf-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--info);
+        }
+
+        .perf-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Webhook System Monitor</h1>
+            <p>Real-time Performance & Health Dashboard</p>
+        </div>
+
+        <div class="refresh-controls">
+            <div class="refresh-info">
+                <span>Letztes Update: <span id="lastUpdate">--</span></span>
+                <span class="auto-refresh-indicator"></span>
+            </div>
+            <div class="controls">
+                <button onclick="refreshData()">Aktualisieren</button>
+                <button class="secondary" onclick="toggleAutoRefresh()">
+                    Auto-Refresh: <span id="autoRefreshStatus">AN</span>
+                </button>
+                <button class="secondary" onclick="exportData()">Export</button>
+            </div>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+            <!-- Status cards werden hier dynamisch eingefügt -->
+        </div>
+
+        <div class="grid">
+            <!-- Performance Metrics Card -->
+            <div class="card">
+                <h3>Performance Metriken</h3>
+                <div id="performanceMetrics">
+                    <div class="loading">Lade Daten...</div>
+                </div>
+                <div class="performance-grid" id="performanceGrid">
+                    <!-- Performance metrics werden hier eingefügt -->
+                </div>
+            </div>
+
+            <!-- System Health Card -->
+            <div class="card">
+                <h3>System Health</h3>
+                <div id="systemHealth">
+                    <div class="loading">Lade Daten...</div>
+                </div>
+            </div>
+
+            <!-- Resource Usage Card -->
+            <div class="card">
+                <h3>Resource Usage</h3>
+                <div id="resourceUsage">
+                    <div class="loading">Lade Daten...</div>
+                </div>
+                <div class="chart-container">
+                    <span>Echtzeit-Charts (Coming Soon)</span>
+                </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="card">
+                <h3>Recent Alerts</h3>
+                <div id="alertsContainer">
+                    <div class="loading">Lade Alerts...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="card">
+            <h3>System Information</h3>
+            <div id="systemInfo">
+                <div class="loading">Lade System-Info...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefresh = true;
+        let refreshInterval;
+        let dashboardData = null;
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshData();
+            startAutoRefresh();
+        });
+
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+            refreshInterval = setInterval(refreshData, 5000); // 5 seconds
+        }
+
+        function toggleAutoRefresh() {
+            autoRefresh = !autoRefresh;
+            const statusElement = document.getElementById('autoRefreshStatus');
+            
+            if (autoRefresh) {
+                startAutoRefresh();
+                statusElement.textContent = 'AN';
+            } else {
+                clearInterval(refreshInterval);
+                statusElement.textContent = 'AUS';
+            }
+        }
+
+        async function refreshData() {
+            try {
+                // In production, this would call the Python monitor script
+                // For demo purposes, we'll simulate data
+                const response = await simulateDataFetch();
+                dashboardData = response;
+                updateDashboard(dashboardData);
+                updateLastUpdateTime();
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showError('Fehler beim Laden der Daten: ' + error.message);
+            }
+        }
+
+        // Simulate data fetching (in production, call Python script)
+        async function simulateDataFetch() {
+            // This simulates calling: python3 webhook-monitor.py --dashboard
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({
+                        current_metrics: {
+                            timestamp: Date.now() / 1000,
+                            memory_usage_mb: Math.random() * 50 + 10,
+                            cpu_percent: Math.random() * 30 + 5,
+                            trigger_count: Math.floor(Math.random() * 100),
+                            response_time_ms: Math.random() * 500 + 200,
+                            error_count: Math.floor(Math.random() * 3),
+                            health_status: ['HEALTHY', 'WARNING', 'HEALTHY'][Math.floor(Math.random() * 3)],
+                            active_connections: Math.floor(Math.random() * 5) + 1
+                        },
+                        performance_stats: {
+                            avg_response_time: Math.random() * 300 + 150,
+                            min_response_time: Math.random() * 100 + 50,
+                            max_response_time: Math.random() * 500 + 300,
+                            total_requests: Math.floor(Math.random() * 10000),
+                            successful_requests: Math.floor(Math.random() * 9500),
+                            failed_requests: Math.floor(Math.random() * 50)
+                        },
+                        trends: {
+                            memory: ['UP', 'DOWN', 'STABLE'][Math.floor(Math.random() * 3)],
+                            cpu: ['UP', 'DOWN', 'STABLE'][Math.floor(Math.random() * 3)],
+                            response_time: ['UP', 'DOWN', 'STABLE'][Math.floor(Math.random() * 3)]
+                        },
+                        recent_alerts: [
+                            {
+                                type: 'MEMORY_HIGH',
+                                message: 'Memory usage: 45.2MB',
+                                severity: 'WARNING',
+                                timestamp: new Date(Date.now() - 300000).toISOString()
+                            },
+                            {
+                                type: 'RESPONSE_SLOW',
+                                message: 'Response time: 1200ms',
+                                severity: 'WARNING',
+                                timestamp: new Date(Date.now() - 600000).toISOString()
+                            }
+                        ],
+                        system_info: {
+                            uptime: '2 days, 14:32:15',
+                            total_memory_gb: 8.0,
+                            disk_free_gb: 45.3
+                        }
+                    });
+                }, 100);
+            });
+        }
+
+        function updateDashboard(data) {
+            updateStatusBar(data.current_metrics);
+            updatePerformanceMetrics(data.current_metrics, data.performance_stats, data.trends);
+            updateSystemHealth(data.current_metrics, data.system_info);
+            updateResourceUsage(data.current_metrics);
+            updateAlerts(data.recent_alerts);
+            updateSystemInfo(data.system_info);
+        }
+
+        function updateStatusBar(metrics) {
+            const statusBar = document.getElementById('statusBar');
+            
+            const healthClass = getHealthClass(metrics.health_status);
+            
+            statusBar.innerHTML = `
+                <div class="status-card ${healthClass}">
+                    <div class="status-value">${metrics.health_status}</div>
+                    <div class="status-label">System Status</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-value">${metrics.memory_usage_mb.toFixed(1)} MB</div>
+                    <div class="status-label">Memory Usage</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-value">${metrics.cpu_percent.toFixed(1)}%</div>
+                    <div class="status-label">CPU Usage</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-value">${metrics.response_time_ms.toFixed(0)} ms</div>
+                    <div class="status-label">Response Time</div>
+                </div>
+                <div class="status-card">
+                    <div class="status-value">${metrics.trigger_count}</div>
+                    <div class="status-label">Total Triggers</div>
+                </div>
+            `;
+        }
+
+        function updatePerformanceMetrics(metrics, stats, trends) {
+            const container = document.getElementById('performanceMetrics');
+            
+            container.innerHTML = `
+                <div class="metric-row">
+                    <span class="metric-label">Durchschn. Response Zeit</span>
+                    <span class="metric-value">
+                        ${stats.avg_response_time.toFixed(1)} ms
+                        <span class="trend-${trends.response_time.toLowerCase()}">${getTrendSymbol(trends.response_time)}</span>
+                    </span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Erfolgreiche Requests</span>
+                    <span class="metric-value">${stats.successful_requests.toLocaleString()}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Fehlerhafte Requests</span>
+                    <span class="metric-value">${stats.failed_requests.toLocaleString()}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Erfolgsrate</span>
+                    <span class="metric-value">${calculateSuccessRate(stats).toFixed(1)}%</span>
+                </div>
+            `;
+
+            const perfGrid = document.getElementById('performanceGrid');
+            perfGrid.innerHTML = `
+                <div class="perf-metric">
+                    <div class="perf-value">${stats.min_response_time.toFixed(0)}</div>
+                    <div class="perf-label">Min Response</div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-value">${stats.max_response_time.toFixed(0)}</div>
+                    <div class="perf-label">Max Response</div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-value">${stats.total_requests}</div>
+                    <div class="perf-label">Total Requests</div>
+                </div>
+                <div class="perf-metric">
+                    <div class="perf-value">${metrics.active_connections}</div>
+                    <div class="perf-label">Connections</div>
+                </div>
+            `;
+        }
+
+        function updateSystemHealth(metrics, systemInfo) {
+            const container = document.getElementById('systemHealth');
+            const memoryPercent = (metrics.memory_usage_mb / (systemInfo.total_memory_gb * 1024)) * 100;
+            
+            container.innerHTML = `
+                <div class="metric-row">
+                    <span class="metric-label">Health Status</span>
+                    <span class="metric-value ${getHealthClass(metrics.health_status)}">${metrics.health_status}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">System Uptime</span>
+                    <span class="metric-value">${systemInfo.uptime}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Memory Usage</span>
+                    <span class="metric-value">${memoryPercent.toFixed(1)}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${getProgressClass(memoryPercent)}" style="width: ${memoryPercent}%"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Disk Space Free</span>
+                    <span class="metric-value">${systemInfo.disk_free_gb.toFixed(1)} GB</span>
+                </div>
+            `;
+        }
+
+        function updateResourceUsage(metrics) {
+            const container = document.getElementById('resourceUsage');
+            
+            container.innerHTML = `
+                <div class="metric-row">
+                    <span class="metric-label">CPU Usage</span>
+                    <span class="metric-value">${metrics.cpu_percent.toFixed(1)}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill ${getProgressClass(metrics.cpu_percent)}" style="width: ${metrics.cpu_percent}%"></div>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Memory Usage</span>
+                    <span class="metric-value">${metrics.memory_usage_mb.toFixed(1)} MB</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Error Count</span>
+                    <span class="metric-value">${metrics.error_count}</span>
+                </div>
+            `;
+        }
+
+        function updateAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: var(--success); padding: 20px;">✓ Keine aktuellen Alerts</div>';
+                return;
+            }
+            
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item ${alert.severity.toLowerCase()}">
+                    <div class="alert-timestamp">${formatTimestamp(alert.timestamp)}</div>
+                    <div class="alert-message">
+                        <strong>[${alert.severity}]</strong> ${alert.message}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateSystemInfo(systemInfo) {
+            const container = document.getElementById('systemInfo');
+            
+            container.innerHTML = `
+                <div class="metric-row">
+                    <span class="metric-label">System Uptime</span>
+                    <span class="metric-value">${systemInfo.uptime}</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Total Memory</span>
+                    <span class="metric-value">${systemInfo.total_memory_gb.toFixed(1)} GB</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Free Disk Space</span>
+                    <span class="metric-value">${systemInfo.disk_free_gb.toFixed(1)} GB</span>
+                </div>
+                <div class="metric-row">
+                    <span class="metric-label">Monitor Version</span>
+                    <span class="metric-value">2.0</span>
+                </div>
+            `;
+        }
+
+        // Utility functions
+        function getHealthClass(status) {
+            switch (status.toLowerCase()) {
+                case 'healthy': return 'healthy';
+                case 'warning': return 'warning';
+                case 'unhealthy':
+                case 'error': return 'error';
+                default: return '';
+            }
+        }
+
+        function getProgressClass(percent) {
+            if (percent < 60) return 'healthy';
+            if (percent < 80) return 'warning';
+            return 'critical';
+        }
+
+        function getTrendSymbol(trend) {
+            switch (trend.toLowerCase()) {
+                case 'up': return '↗';
+                case 'down': return '↘';
+                case 'stable': return '→';
+                default: return '→';
+            }
+        }
+
+        function calculateSuccessRate(stats) {
+            const total = stats.successful_requests + stats.failed_requests;
+            return total > 0 ? (stats.successful_requests / total) * 100 : 100;
+        }
+
+        function formatTimestamp(timestamp) {
+            return new Date(timestamp).toLocaleString('de-DE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        function updateLastUpdateTime() {
+            document.getElementById('lastUpdate').textContent = 
+                new Date().toLocaleTimeString('de-DE');
+        }
+
+        function showError(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+
+        function exportData() {
+            if (dashboardData) {
+                const dataStr = JSON.stringify(dashboardData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `webhook-monitor-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+            } else {
+                alert('Keine Daten zum Exportieren verfügbar.');
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'r' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                refreshData();
+            }
+        });
+    </script>
+</body>
+</html>

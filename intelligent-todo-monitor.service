@@ -1,0 +1,24 @@
+[Unit]
+Description=Intelligent TODO Monitoring System
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=rodemkay
+WorkingDirectory=/home/rodemkay/www/react/todo
+ExecStart=/home/rodemkay/www/react/todo/intelligent_todo_monitor.sh start
+ExecStop=/home/rodemkay/www/react/todo/intelligent_todo_monitor.sh stop
+Restart=always
+RestartSec=10
+
+# Logging
+StandardOutput=append:/tmp/intelligent_todo_monitor_service.log
+StandardError=append:/tmp/intelligent_todo_monitor_service.log
+
+# Environment
+Environment=HOME=/home/rodemkay
+Environment=USER=rodemkay
+
+[Install]
+WantedBy=multi-user.target
