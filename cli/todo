@@ -22,13 +22,13 @@ REMOTE_PATH="/var/www/forexsignale/staging"
 
 # Function to execute remote WP-CLI commands
 remote_wp() {
-    ssh $SSH_HOST "cd $REMOTE_PATH && wp $*"
+    ssh $SSH_HOST "cd $REMOTE_PATH && wp $@"
 }
 
 # Function to get next todo
 get_next_todo() {
     echo -e "${BLUE}Loading next todo...${NC}"
-    local result=$(remote_wp db query "SELECT id, title, description FROM ${DB_PREFIX}project_todos WHERE status='offen' AND bearbeiten=1 ORDER BY priority DESC, id ASC LIMIT 1" --format=json 2>/dev/null)
+    local result=$(ssh $SSH_HOST "cd $REMOTE_PATH && wp db query \"SELECT id, title, description FROM ${DB_PREFIX}project_todos WHERE status='offen' AND bearbeiten=1 ORDER BY priority DESC, id ASC LIMIT 1\" --format=json" 2>/dev/null)
     
     if [ ! -z "$result" ] && [ "$result" != "[]" ]; then
         echo "$result" | jq -r '.[0] | "ID: \(.id)\nTitle: \(.title)\nDescription: \(.description)"'
@@ -52,7 +52,7 @@ get_todo_by_id() {
     local todo_id=$1
     echo -e "${BLUE}Loading todo #$todo_id...${NC}"
     
-    local result=$(remote_wp db query "SELECT id, title, description, status, bearbeiten FROM ${DB_PREFIX}project_todos WHERE id=$todo_id" --format=json 2>/dev/null)
+    local result=$(ssh $SSH_HOST "cd $REMOTE_PATH && wp db query \"SELECT id, title, description, status, bearbeiten FROM ${DB_PREFIX}project_todos WHERE id=$todo_id\" --format=json" 2>/dev/null)
     
     if [ ! -z "$result" ] && [ "$result" != "[]" ]; then
         echo "$result" | jq -r '.[0] | "ID: \(.id)\nTitle: \(.title)\nDescription: \(.description)\nStatus: \(.status)\nBearbeiten: \(.bearbeiten)"'

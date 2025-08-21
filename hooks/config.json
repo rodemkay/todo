@@ -1,0 +1,36 @@
+{
+  "database": {
+    "host": "159.69.157.54",
+    "user": "rodemkay",
+    "db_name": "staging_forexsignale",
+    "table_prefix": "stage_",
+    "remote_path": "/var/www/forexsignale/staging"
+  },
+  "behavior": {
+    "auto_continue": true,
+    "save_outputs": true,
+    "create_versions": true,
+    "max_retries": 3,
+    "collect_terminal_output": true,
+    "track_file_operations": true
+  },
+  "paths": {
+    "current_todo": "/tmp/CURRENT_TODO_ID",
+    "task_completed": "/tmp/TASK_COMPLETED",
+    "specific_mode": "/tmp/SPECIFIC_TODO_MODE",
+    "logs": "/home/rodemkay/www/react/todo/hooks/logs",
+    "archive": "/home/rodemkay/www/react/todo/hooks/archive",
+    "sessions": "/tmp/claude_sessions"
+  },
+  "logging": {
+    "enabled": true,
+    "level": "DEBUG",
+    "max_size_mb": 10,
+    "rotate_daily": true
+  },
+  "monitoring": {
+    "enabled": true,
+    "alert_on_error": true,
+    "webhook_url": ""
+  }
+}

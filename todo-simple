@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# Simple version for loading and completing Todo #158
+
+SSH_HOST="rodemkay@159.69.157.54"
+REMOTE_PATH="/var/www/forexsignale/staging"
+
+# Load Todo #158
+echo "Loading Todo #158..."
+ssh $SSH_HOST "cd $REMOTE_PATH && wp db query \"SELECT id, title, status FROM stage_project_todos WHERE id=158\""
+
+# Set status to in_progress
+echo "Setting status to in_progress..."
+ssh $SSH_HOST "cd $REMOTE_PATH && wp db query \"UPDATE stage_project_todos SET status='in_progress' WHERE id=158\""
+
+# Store current ID
+echo "158" > /tmp/CURRENT_TODO_ID
+
+echo "Todo #158 loaded. Summary and HTML output already set."
+echo ""
+echo "Run this to complete:"
+echo "echo 'TASK_COMPLETED' > /tmp/TASK_COMPLETED"

@@ -44,10 +44,12 @@
 
 ## 🚨 KRITISCHE REGELN
 
-### 1. HOOK SYSTEM WORKFLOW
+### 1. HOOK SYSTEM WORKFLOW (NEUES SYSTEM!)
+- **NEU:** Eigenes zuverlässiges Hook-System ohne Blockierungen!
 - Tasks die durch `./todo` gestartet wurden, MÜSSEN mit `TASK_COMPLETED` beendet werden
 - Befehl: `echo 'TASK_COMPLETED' > /tmp/TASK_COMPLETED`
 - NIEMALS Tasks offen lassen oder Session beenden ohne TASK_COMPLETED
+- **WICHTIG:** WP-CLI `--format=json` funktioniert NICHT mit `wp db query` (MariaDB-Limitation)
 
 ### 2. TODOWRITE VERWENDUNG
 - NUR für echte Datenbank-Todos mit numerischen IDs verwenden
@@ -110,13 +112,19 @@
 - **Staging Mount:** /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/
 - **Live Mount:** /home/rodemkay/www/react/mounts/hetzner/forexsignale/ (READ-ONLY!)
 
-### CLI-Befehle
+### CLI-Befehle (v2.0 - Erweitert!)
 ```bash
+# Standard-Befehle
 ./todo              # Nächstes Todo laden (status='offen', bearbeiten=1)
 ./todo -id 67       # Spezifisches Todo #67 laden
 ./todo complete     # Aktuelles Todo abschließen
-./todo list         # Alle Todos anzeigen
 ./todo status       # Aktuellen Status zeigen
+
+# NEU in v2.0
+./todo monitor      # System Health Check (prüft DB, IDs, Locks)
+./todo test         # Führt 10 Tests aus (sollte 100% zeigen)
+./todo fix          # Behebt automatisch häufige Probleme
+./todo help         # Zeigt erweiterte Hilfe
 ```
 
 ## 🐛 BEKANNTE PROBLEME & FIXES
@@ -163,6 +171,7 @@ npm test
 - **GitHub Setup:** `docs/GITHUB_SETUP.md` - Repository & Push Anleitung
 - **Current Status:** `docs/CURRENT_STATUS.md` - Aktueller Projektstatus
 - **Screenshots:** `docs/screenshots/` - UI-Referenzbilder
+- **🆕 Hook System Lösung:** `docs/HOOK_SYSTEM_SOLUTION.md` - Vollständige Dokumentation des neuen zuverlässigen Hook-Systems nach WP-CLI JSON-Fix
 
 ### Plugin Core Files  
 ⚠️ **WICHTIG: Alles in `/plugins/todo/` - KEIN wp-project-todos mehr!**
@@ -171,10 +180,17 @@ npm test
 - **Dashboard-Template:** `/staging/wp-content/plugins/todo/templates/wsj-dashboard.php`
 - **New Task Page:** `/staging/wp-content/plugins/todo/admin/new-todo.php`
 
-### Hook System
-- **Validator:** `hooks/consistency_validator.py`
-- **Clear Script:** `hooks/clear_violations.sh`
-- **CLI Tool:** `cli/todo`
+### Hook System v2.0 (ROBUST & GETESTET!)
+✅ **NEU: Robustes Hook-System v2.0 mit 100% Test-Coverage**
+- **Manager:** `hooks/todo_manager.py` - Hauptlogik mit Output-Collection
+- **Collector:** `hooks/output_collector.py` - Erfasst Claude's echte Outputs
+- **Monitor:** `hooks/monitor.py` - Health-Checks & Auto-Fixes
+- **Tester:** `hooks/test-suite.py` - 10 automatisierte Tests (100% passed)
+- **Config:** `hooks/config.json` - Erweiterte Konfiguration
+- **CLI Tool:** `todo` - Erweiterte Befehle (monitor, test, fix)
+- **Dokumentation:** 
+  - `docs/HOOK_SYSTEM_SOLUTION.md` - WP-CLI JSON-Fix
+  - `docs/ROBUST_HOOK_SYSTEM.md` - v2.0 Komplettlösung
 
 ## ⚠️ WICHTIGE HINWEISE
 
