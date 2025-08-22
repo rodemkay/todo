@@ -12,7 +12,12 @@
     "create_versions": true,
     "max_retries": 3,
     "collect_terminal_output": true,
-    "track_file_operations": true
+    "track_file_operations": true,
+    "completion_timeout": 300,
+    "emergency_timeout": 1800,
+    "enable_robust_completion": true,
+    "enable_emergency_handlers": true,
+    "auto_recovery": true
   },
   "paths": {
     "current_todo": "/tmp/CURRENT_TODO_ID",

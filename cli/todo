@@ -33,9 +33,9 @@ get_next_todo() {
     if [ ! -z "$result" ] && [ "$result" != "[]" ]; then
         echo "$result" | jq -r '.[0] | "ID: \(.id)\nTitle: \(.title)\nDescription: \(.description)"'
         
-        # Update status to in_progress
+        # Update status to in_progress and set execution_started_at
         local todo_id=$(echo "$result" | jq -r '.[0].id')
-        remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='in_progress' WHERE id=$todo_id"
+        remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='in_progress', execution_started_at=NOW() WHERE id=$todo_id AND execution_started_at IS NULL"
         
         # Store current todo ID
         echo "$todo_id" > /tmp/CURRENT_TODO_ID
@@ -57,10 +57,10 @@ get_todo_by_id() {
     if [ ! -z "$result" ] && [ "$result" != "[]" ]; then
         echo "$result" | jq -r '.[0] | "ID: \(.id)\nTitle: \(.title)\nDescription: \(.description)\nStatus: \(.status)\nBearbeiten: \(.bearbeiten)"'
         
-        # Update status to in_progress if it's offen
+        # Update status to in_progress if it's offen and set execution_started_at
         local current_status=$(echo "$result" | jq -r '.[0].status')
         if [ "$current_status" = "offen" ]; then
-            remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='in_progress' WHERE id=$todo_id"
+            remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='in_progress', execution_started_at=NOW() WHERE id=$todo_id AND execution_started_at IS NULL"
         fi
         
         # Store current todo ID
@@ -83,7 +83,7 @@ complete_todo() {
     local todo_id=$(cat /tmp/CURRENT_TODO_ID)
     echo -e "${GREEN}Completing todo #$todo_id...${NC}"
     
-    # Update status to completed
+    # Update status to completed and set completed_at
     remote_wp db query "UPDATE ${DB_PREFIX}project_todos SET status='completed', completed_at=NOW() WHERE id=$todo_id"
     
     # Remove current todo file

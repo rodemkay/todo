@@ -17,6 +17,8 @@ HOOK_DIR="$TODO_DIR/hooks"
 MANAGER="$HOOK_DIR/todo_manager.py"
 MONITOR="$HOOK_DIR/monitor.py"
 TESTER="$HOOK_DIR/test-suite.py"
+COMPLETION_MONITOR="$HOOK_DIR/completion_monitor.py"
+EMERGENCY_HANDLER="$HOOK_DIR/emergency_handlers.py"
 
 # Prüfe Python3
 if ! command -v python3 &> /dev/null; then
@@ -42,6 +44,9 @@ show_help() {
     echo -e "  ${GREEN}./todo monitor${NC}      # System Health Check"
     echo -e "  ${GREEN}./todo test${NC}         # Führt Tests aus"
     echo -e "  ${GREEN}./todo fix${NC}          # Behebt häufige Probleme"
+    echo -e "  ${GREEN}./todo health${NC}       # Health Check des Completion-Systems"
+    echo -e "  ${GREEN}./todo emergency <id>${NC} # Emergency Completion für Todo"
+    echo -e "  ${GREEN}./todo daemon${NC}       # Startet Monitor-Daemon"
     echo -e "  ${GREEN}./todo help${NC}         # Zeigt diese Hilfe"
     echo ""
     echo "Verhalten:"
@@ -97,6 +102,30 @@ case "$1" in
         # Probleme beheben
         echo -e "${YELLOW}Attempting to fix common issues...${NC}"
         python3 "$MONITOR" fix
+        ;;
+    
+    "health")
+        # Health Check des Completion-Systems
+        echo -e "${BLUE}Running completion system health check...${NC}"
+        python3 "$COMPLETION_MONITOR"
+        ;;
+    
+    "emergency")
+        # Emergency Completion für spezifische Todo-ID
+        if [ -z "$2" ]; then
+            echo -e "${RED}Error: Todo ID required for emergency completion${NC}"
+            echo -e "${YELLOW}Usage: ./todo emergency <todo_id>${NC}"
+            exit 1
+        fi
+        echo -e "${RED}🚨 Running emergency completion for Todo #$2...${NC}"
+        python3 "$EMERGENCY_HANDLER" emergency-complete "$2"
+        ;;
+    
+    "daemon")
+        # Startet Completion Monitor im Daemon-Modus
+        echo -e "${BLUE}Starting completion monitor daemon...${NC}"
+        echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
+        python3 "$COMPLETION_MONITOR" --daemon
         ;;
     
     "help"|"-h"|"--help")
