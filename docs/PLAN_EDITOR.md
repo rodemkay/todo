@@ -1899,4 +1899,4 @@ console.log('Active TinyMCE instances:', tinymce.editors.length);
 **User-Experience:** Von "Technisch & Schwierig" zu "Intuitiv & Professionell"  
 **Adoption-Rate:** 100% - Keine HTML-Kenntnisse mehr erforderlich  
 **Maintenance:** Claude Code System  
-**Support:** `/home/rodemkay/www/react/todo/docs/`
+**Support:** `/home/rodemkay/www/react/plugin-todo/docs/`

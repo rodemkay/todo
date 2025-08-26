@@ -240,7 +240,7 @@ function restoreTodoContext($todo_id) {
 - Auto-Save-Funktionalität testen
 - WYSIWYG-Integration vervollständigen
 
-📁 Working Directory: /home/rodemkay/www/react/todo/
+📁 Working Directory: /home/rodemkay/www/react/plugin-todo/
 🔗 Relevante Dateien:
 - plugin/includes/class-admin.php (zuletzt geändert: 21.01.2025 20:15)
 - plugin/assets/js/plan-editor.js (neu)
@@ -641,4 +641,4 @@ $defer_reason_templates = array(
 
 **Status:** ✅ PRODUKTIONSREIF  
 **Maintenance:** Claude Code  
-**Support:** `/home/rodemkay/www/react/todo/docs/`
+**Support:** `/home/rodemkay/www/react/plugin-todo/docs/`

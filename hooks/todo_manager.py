@@ -55,7 +55,7 @@ def get_next_todo():
         'assigned_to', 'due_date', 'completed_date', 'is_recurring', 'recurring_type',
         'claude_notes', 'claude_prompt', 'bemerkungen', 'continuation_notes',
         'plan_html', 'report_url', 'related_files', 'dependencies', 'parent_todo_id',
-        'created_at', 'updated_at', 'save_agent_outputs'
+        'created_at', 'updated_at', 'save_agent_outputs', 'prompt_output'
     ]
     
     # Original query ohne Projekt-Filter
@@ -86,7 +86,7 @@ def get_next_todo():
                     'version': parts[7] if len(parts) > 7 else '1.00',
                     'priority': parts[8] if len(parts) > 8 else 'mittel',
                     'scope': parts[9] if len(parts) > 9 else 'todo-plugin',
-                    'working_directory': parts[10] if len(parts) > 10 else '/home/rodemkay/www/react/todo/',
+                    'working_directory': parts[10] if len(parts) > 10 else '/home/rodemkay/www/react/plugin-todo/',
                     'development_area': parts[11] if len(parts) > 11 else 'fullstack',
                     'agent_count': parts[12] if len(parts) > 12 else '0',
                     'subagent_instructions': parts[13] if len(parts) > 13 else '',
@@ -109,7 +109,8 @@ def get_next_todo():
                     'parent_todo_id': parts[30] if len(parts) > 30 else None,
                     'created_at': parts[31] if len(parts) > 31 else '',
                     'updated_at': parts[32] if len(parts) > 32 else '',
-                    'save_agent_outputs': parts[33] if len(parts) > 33 else '0'
+                    'save_agent_outputs': parts[33] if len(parts) > 33 else '0',
+                    'prompt_output': parts[34] if len(parts) > 34 else ''
                 }
                 
                 # Log erweiterte Datenladung
@@ -128,7 +129,7 @@ def get_todo_by_id(todo_id):
         'assigned_to', 'due_date', 'completed_date', 'is_recurring', 'recurring_type',
         'claude_notes', 'claude_prompt', 'bemerkungen', 'continuation_notes',
         'plan_html', 'report_url', 'related_files', 'dependencies', 'parent_todo_id',
-        'created_at', 'updated_at', 'save_agent_outputs'
+        'created_at', 'updated_at', 'save_agent_outputs', 'prompt_output'
     ]
     
     query = f"SELECT {', '.join(fields)} FROM {CONFIG['database']['table_prefix']}project_todos WHERE id={todo_id}"
@@ -179,7 +180,7 @@ def get_todo_by_id(todo_id):
                 'version': parts[7] if len(parts) > 7 else '1.00',
                 'priority': parts[8] if len(parts) > 8 else 'mittel',
                 'scope': parts[9] if len(parts) > 9 else 'todo-plugin',
-                'working_directory': parts[10] if len(parts) > 10 else '/home/rodemkay/www/react/todo/',
+                'working_directory': parts[10] if len(parts) > 10 else '/home/rodemkay/www/react/plugin-todo/',
                 'development_area': parts[11] if len(parts) > 11 else 'fullstack',
                 'agent_count': parts[12] if len(parts) > 12 else '0',
                 'subagent_instructions': parts[13] if len(parts) > 13 else '',
@@ -202,7 +203,8 @@ def get_todo_by_id(todo_id):
                 'parent_todo_id': parts[30] if len(parts) > 30 else None,
                 'created_at': parts[31] if len(parts) > 31 else '',
                 'updated_at': parts[32] if len(parts) > 32 else '',
-                'save_agent_outputs': parts[33] if len(parts) > 33 else '0'
+                'save_agent_outputs': parts[33] if len(parts) > 33 else '0',
+                'prompt_output': parts[34] if len(parts) > 34 else ''
             }
             
             # Log erweiterte Datenladung
@@ -275,11 +277,20 @@ def load_todo(todo_id=None):
     # Import planning mode handler
     try:
         import sys
-        sys.path.append('/home/rodemkay/www/react/todo/hooks')
+        sys.path.append('/home/rodemkay/www/react/plugin-todo/hooks')
         from planning_mode import get_mode_instruction, generate_plan_html
     except ImportError:
         get_mode_instruction = None
         generate_plan_html = None
+    
+    # Import session switcher für automatisches Projekt-Session-Management
+    # DEAKTIVIERT - funktioniert nicht richtig
+    auto_switch_for_todo = None
+    # try:
+    #     from session_switcher import auto_switch_for_todo
+    # except ImportError:
+    #     auto_switch_for_todo = None
+    #     log("WARNING", "Session switcher not available")
     
     # Prüfe ob bereits ein Todo aktiv ist
     if Path(CONFIG["paths"]["current_todo"]).exists():
@@ -301,16 +312,68 @@ def load_todo(todo_id=None):
         # Spezifisches Todo laden
         todo = get_todo_by_id(todo_id)
         if todo:
+            # AUTOMATISCHES SESSION-SWITCHING basierend auf TODO-Projekt
+            # DEAKTIVIERT - funktioniert nicht richtig
+            # if auto_switch_for_todo:
+            #     try:
+            #         auto_switch_for_todo(todo)
+            #     except Exception as e:
+            #         log("ERROR", f"Session switching failed: {e}")
+            #         print(f"⚠️ Session-Switching fehlgeschlagen: {e}")
+            
             print(f"\n📋 Loading Todo #{todo['id']}: {todo['title']}")
             print(f"Description: {todo['description'][:200]}...")
             print(f"Current Status: {todo['status']}")
+            
+            # IMMER Agent-Output-Ordner erstellen für Uploads und Dokumentation (VOR prompt_output check!)
+            agent_output_dir = Path(f"/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/wp-content/uploads/agent-outputs/todo-{todo.get('id')}")
+            
+            # AUTOMATISCH ORDNER ERSTELLEN (für JEDES TODO!)
+            try:
+                agent_output_dir.mkdir(parents=True, exist_ok=True)
+                print(f"\n✅ Agent-Output-Ordner automatisch erstellt/verifiziert:")
+                print(f"   📁 {agent_output_dir}/")
+                print(f"   ℹ️ Dieser Ordner wird für Uploads, Dokumentation und Zusammenfassungen verwendet")
+            except Exception as e:
+                print(f"⚠️ Konnte Agent-Output-Ordner nicht erstellen: {e}")
+                log("WARNING", f"Failed to create agent-output directory: {e}")
+            
+            # NEUE PROMPT_OUTPUT LOGIK - Primary Output anzeigen falls vorhanden
+            if todo.get('prompt_output') and len(todo.get('prompt_output', '')) > 10:
+                print(f"\n📋 PROMPT OUTPUT (aus Datenbank):")
+                print("=" * 50)
+                print(todo.get('prompt_output'))
+                print("=" * 50)
+                print("✅ Prompt Output aus Datenbank geladen - keine weitere Verarbeitung!")
+                
+                # ID speichern mit Validierung (VOR Status-Änderung!)
+                with open(CONFIG["paths"]["current_todo"], 'w') as f:
+                    f.write(str(todo['id']))
+                
+                # Verifiziere gespeicherte ID
+                with open(CONFIG["paths"]["current_todo"]) as f:
+                    saved_id = f.read().strip()
+                if saved_id != str(todo['id']):
+                    log("ERROR", f"ID mismatch: saved {saved_id} vs expected {todo['id']}")
+                    Path(CONFIG["paths"]["current_todo"]).unlink()
+                    return None
+                
+                # Specific mode marker setzen
+                Path(CONFIG["paths"]["specific_mode"]).touch()
+                
+                # Kein Status-Update nötig, da prompt_output bereits existiert
+                log("INFO", f"Loaded specific todo #{todo['id']} with existing prompt_output")
+                return todo
+            
+            # FALLBACK: Alte Logik wenn kein prompt_output vorhanden
+            print(f"\n📝 Keine prompt_output gefunden, verwende Standard-Logik...")
             
             # V3.0: Erweiterte Feldanzeige
             print(f"\n🎯 V3.0 Extended Fields:")
             print(f"  Priority: {todo.get('priority', 'mittel')}")
             print(f"  Scope: {todo.get('scope', 'todo-plugin')}")
             print(f"  Development Area: {todo.get('development_area', 'fullstack')}")
-            print(f"  Working Directory: {todo.get('working_directory', '/home/rodemkay/www/react/todo/')}")
+            print(f"  Working Directory: {todo.get('working_directory', '/home/rodemkay/www/react/plugin-todo/')}")
             if todo.get('due_date'):
                 print(f"  Due Date: {todo.get('due_date')}")
             if todo.get('claude_notes'):
@@ -318,17 +381,50 @@ def load_todo(todo_id=None):
             if todo.get('mcp_servers'):
                 print(f"  MCP Servers: {todo.get('mcp_servers')}")
             
-            # Agent Output Management System V3.0
+            # V3.0: Automatische Ordner-Erstellung für TODO Media Management
+            try:
+                # Erstelle vollständige Ordnerstruktur über WordPress Plugin
+                php_code = f"""php -r "
+require_once('/var/www/forexsignale/staging/wp-config.php');
+require_once('/var/www/forexsignale/staging/wp-content/plugins/todo/includes/class-media-manager.php');
+\\$media_manager = new Todo_Media_Manager();
+\\$success = \\$media_manager->create_todo_folders({todo.get('id')});
+if (\\$success) {{
+    echo 'SUCCESS: TODO media folders created for #{todo.get('id')}';
+}} else {{
+    echo 'ERROR: Failed to create media folders for #{todo.get('id')}';
+}}
+\""""
+                
+                media_creation_result, code = ssh_command(php_code)
+                
+                if code == 0 and 'SUCCESS' in media_creation_result:
+                    print(f"\n📁 TODO MEDIA FOLDER CREATED:")
+                    print(f"✅ Ordner: /wp-content/uploads/agent-outputs/todo-{todo.get('id')}/")
+                    print(f"🔒 Security: .htaccess protection aktiviert")
+                    print(f"📝 README.txt mit TODO-Informationen erstellt")
+                else:
+                    print(f"⚠️ Media folder creation result: {media_creation_result}")
+                    log("WARNING", f"Media folder creation issue for todo #{todo.get('id')}: {media_creation_result}")
+                    
+            except Exception as e:
+                print(f"❌ FEHLER: Konnte Media-Ordner nicht erstellen: {e}")
+                log("ERROR", f"Failed to create media folders for todo #{todo.get('id')}: {e}")
+            
+            # HINWEIS: Agent-Output-Ordner bereits oben erstellt - keine Duplikation nötig!
+            
+            # Agent Output Management System V3.0 - SIMPLIFIED SINGLE FOLDER
             if todo.get('save_agent_outputs') == '1':
                 print(f"\n🗄️ AGENT OUTPUT MANAGEMENT AKTIVIERT:")
-                print(f"📁 Speicherort: /home/rodemkay/www/react/todo/agent-outputs/todo-{todo.get('id')}/")
+                print(f"📁 Ordner: {agent_output_dir}/")
                 print(f"ℹ️ WICHTIGE ANWEISUNGEN FÜR SUBAGENTS:")
-                print(f"   1. Speichere ALLE deine Analysen als .md Dateien")
-                print(f"   2. Dateiname: AGENTNAME_YYYYMMDD_HHMMSS.md")
-                print(f"   3. Verwende NIEMALS TodoWrite in Subagents!")
-                print(f"   4. Schreibe strukturierte Markdown-Dokumentation")
-                print(f"   5. Maximale Dateigröße: 10MB")
-                print(f"   ⚠️ Dies verhindert Context-Overflow bei großen Analysen!")
+                print(f"   1. Verwende Write Tool mit klaren Dateinamen:")
+                print(f"      - Write('{agent_output_dir}/AGENTNAME_YYYYMMDD_HHMMSS.md', content)")
+                print(f"      - Write('{agent_output_dir}/requirements.md', specs)")
+                print(f"      - Write('{agent_output_dir}/analysis_results.json', data)")
+                print(f"   2. Verwende NIEMALS TodoWrite in Subagents!")
+                print(f"   3. Maximale Dateigröße: 10MB pro Datei")
+                print(f"   ⚠️ Alle Dateien werden im gleichen Ordner gespeichert für einfache Sortierung!")
             
             # Zeige Mode-spezifische Anweisungen
             if get_mode_instruction:
@@ -384,16 +480,56 @@ def load_todo(todo_id=None):
         # Nächstes Todo laden
         todo = get_next_todo()
         if todo:
+            # AUTOMATISCHES SESSION-SWITCHING basierend auf TODO-Projekt
+            # DEAKTIVIERT - funktioniert nicht richtig
+            # if auto_switch_for_todo:
+            #     try:
+            #         auto_switch_for_todo(todo)
+            #     except Exception as e:
+            #         log("ERROR", f"Session switching failed: {e}")
+            #         print(f"⚠️ Session-Switching fehlgeschlagen: {e}")
+            
             print(f"\n📋 Loading Todo #{todo['id']}: {todo['title']}")
             print(f"Description: {todo['description'][:200]}...")
             print(f"Current Status: {todo.get('status', 'offen')}")
+            
+            # NEUE PROMPT_OUTPUT LOGIK - Primary Output anzeigen falls vorhanden
+            if todo.get('prompt_output') and len(todo.get('prompt_output', '')) > 10:
+                print(f"\n📋 PROMPT OUTPUT (aus Datenbank):")
+                print("=" * 50)
+                print(todo.get('prompt_output'))
+                print("=" * 50)
+                print("✅ Prompt Output aus Datenbank geladen - keine weitere Verarbeitung!")
+                
+                # ID speichern (VOR Status-Änderung!)
+                with open(CONFIG["paths"]["current_todo"], 'w') as f:
+                    f.write(str(todo['id']))
+                
+                # Verifiziere gespeicherte ID
+                with open(CONFIG["paths"]["current_todo"]) as f:
+                    saved_id = f.read().strip()
+                if saved_id != str(todo['id']):
+                    log("ERROR", f"ID mismatch: saved {saved_id} vs expected {todo['id']}")
+                    Path(CONFIG["paths"]["current_todo"]).unlink()
+                    return None
+                
+                # Specific mode marker löschen (da nächstes Todo)
+                if Path(CONFIG["paths"]["specific_mode"]).exists():
+                    Path(CONFIG["paths"]["specific_mode"]).unlink()
+                
+                # Kein Status-Update nötig, da prompt_output bereits existiert
+                log("INFO", f"Loaded next todo #{todo['id']} with existing prompt_output")
+                return todo
+            
+            # FALLBACK: Alte Logik wenn kein prompt_output vorhanden
+            print(f"\n📝 Keine prompt_output gefunden, verwende Standard-Logik...")
             
             # V3.0: Erweiterte Feldanzeige
             print(f"\n🎯 V3.0 Extended Fields:")
             print(f"  Priority: {todo.get('priority', 'mittel')}")
             print(f"  Scope: {todo.get('scope', 'todo-plugin')}")
             print(f"  Development Area: {todo.get('development_area', 'fullstack')}")
-            print(f"  Working Directory: {todo.get('working_directory', '/home/rodemkay/www/react/todo/')}")
+            print(f"  Working Directory: {todo.get('working_directory', '/home/rodemkay/www/react/plugin-todo/')}")
             if todo.get('due_date'):
                 print(f"  Due Date: {todo.get('due_date')}")
             if todo.get('claude_notes'):
@@ -401,17 +537,50 @@ def load_todo(todo_id=None):
             if todo.get('mcp_servers'):
                 print(f"  MCP Servers: {todo.get('mcp_servers')}")
             
-            # Agent Output Management System V3.0
+            # V3.0: Automatische Ordner-Erstellung für TODO Media Management
+            try:
+                # Erstelle vollständige Ordnerstruktur über WordPress Plugin
+                php_code = f"""php -r "
+require_once('/var/www/forexsignale/staging/wp-config.php');
+require_once('/var/www/forexsignale/staging/wp-content/plugins/todo/includes/class-media-manager.php');
+\\$media_manager = new Todo_Media_Manager();
+\\$success = \\$media_manager->create_todo_folders({todo.get('id')});
+if (\\$success) {{
+    echo 'SUCCESS: TODO media folders created for #{todo.get('id')}';
+}} else {{
+    echo 'ERROR: Failed to create media folders for #{todo.get('id')}';
+}}
+\""""
+                
+                media_creation_result, code = ssh_command(php_code)
+                
+                if code == 0 and 'SUCCESS' in media_creation_result:
+                    print(f"\n📁 TODO MEDIA FOLDER CREATED:")
+                    print(f"✅ Ordner: /wp-content/uploads/agent-outputs/todo-{todo.get('id')}/")
+                    print(f"🔒 Security: .htaccess protection aktiviert")
+                    print(f"📝 README.txt mit TODO-Informationen erstellt")
+                else:
+                    print(f"⚠️ Media folder creation result: {media_creation_result}")
+                    log("WARNING", f"Media folder creation issue for todo #{todo.get('id')}: {media_creation_result}")
+                    
+            except Exception as e:
+                print(f"❌ FEHLER: Konnte Media-Ordner nicht erstellen: {e}")
+                log("ERROR", f"Failed to create media folders for todo #{todo.get('id')}: {e}")
+            
+            # HINWEIS: Agent-Output-Ordner bereits oben erstellt - keine Duplikation nötig!
+            
+            # Agent Output Management System V3.0 - SIMPLIFIED SINGLE FOLDER
             if todo.get('save_agent_outputs') == '1':
                 print(f"\n🗄️ AGENT OUTPUT MANAGEMENT AKTIVIERT:")
-                print(f"📁 Speicherort: /home/rodemkay/www/react/todo/agent-outputs/todo-{todo.get('id')}/")
+                print(f"📁 Ordner: {agent_output_dir}/")
                 print(f"ℹ️ WICHTIGE ANWEISUNGEN FÜR SUBAGENTS:")
-                print(f"   1. Speichere ALLE deine Analysen als .md Dateien")
-                print(f"   2. Dateiname: AGENTNAME_YYYYMMDD_HHMMSS.md")
-                print(f"   3. Verwende NIEMALS TodoWrite in Subagents!")
-                print(f"   4. Schreibe strukturierte Markdown-Dokumentation")
-                print(f"   5. Maximale Dateigröße: 10MB")
-                print(f"   ⚠️ Dies verhindert Context-Overflow bei großen Analysen!")
+                print(f"   1. Verwende Write Tool mit klaren Dateinamen:")
+                print(f"      - Write('{agent_output_dir}/AGENTNAME_YYYYMMDD_HHMMSS.md', content)")
+                print(f"      - Write('{agent_output_dir}/requirements.md', specs)")
+                print(f"      - Write('{agent_output_dir}/analysis_results.json', data)")
+                print(f"   2. Verwende NIEMALS TodoWrite in Subagents!")
+                print(f"   3. Maximale Dateigröße: 10MB pro Datei")
+                print(f"   ⚠️ Alle Dateien werden im gleichen Ordner gespeichert für einfache Sortierung!")
             
             # Zeige Mode-spezifische Anweisungen
             if get_mode_instruction:
@@ -599,7 +768,7 @@ def handle_completion_legacy(todo_id):
         
         # V3.0: Automatische Dokumentations-Generierung
         try:
-            doc_script = "/home/rodemkay/www/react/todo/scripts/generate_task_documentation.sh"
+            doc_script = "/home/rodemkay/www/react/plugin-todo/scripts/generate_task_documentation.sh"
             if Path(doc_script).exists():
                 result = subprocess.run([doc_script, str(todo_id)], capture_output=True, text=True)
                 if result.returncode == 0:

@@ -72,7 +72,7 @@ class WebhookLogManager:
             "/tmp/webhook_monitor.log",
             "/tmp/webhook_queue.log",
             "/tmp/claude_trigger.log",
-            "/home/rodemkay/www/react/todo/hooks/logs/todo_*.log"
+            "/home/rodemkay/www/react/plugin-todo/hooks/logs/todo_*.log"
         ]
         
         # Ensure archive directory exists

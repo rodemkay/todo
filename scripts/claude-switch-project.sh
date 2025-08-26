@@ -18,7 +18,7 @@ show_projects() {
     echo ""
     echo -e "${YELLOW}Verfügbare Projekte:${NC}"
     echo ""
-    echo "1) 📋 Todo Plugin        - /home/rodemkay/www/react/todo"
+    echo "1) 📋 Todo Plugin        - /home/rodemkay/www/react/plugin-todo"
     echo "2) 💱 ForexSignale       - /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging"
     echo "3) 🎯 Breakout Brain     - /home/rodemkay/www/react/breakout-brain"
     echo "4) 🖥️  Development       - /home/rodemkay/www/react/development"
@@ -78,7 +78,7 @@ main() {
     
     case $choice in
         1)
-            switch_project "/home/rodemkay/www/react/todo"
+            switch_project "/home/rodemkay/www/react/plugin-todo"
             ;;
         2)
             switch_project "/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging"

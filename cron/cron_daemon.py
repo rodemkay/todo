@@ -163,7 +163,7 @@ class CronDaemon:
                 copy_title,
                 original_job.get('description', ''),
                 original_job.get('priority', 5),
-                original_job.get('arbeitsverzeichnis', '/home/rodemkay/www/react/todo'),
+                original_job.get('arbeitsverzeichnis', '/home/rodemkay/www/react/plugin-todo'),
                 original_job.get('projekt', 'Todo System'),
                 original_job.get('entwicklungsbereich', 'Backend'),
                 original_job['id']  # parent_cron_id

@@ -56,7 +56,7 @@ class QueueStats:
 
 class WebhookQueueManager:
     def __init__(self, config_path: str = None):
-        self.config_path = config_path or "/home/rodemkay/www/react/todo/hooks/config.json"
+        self.config_path = config_path or "/home/rodemkay/www/react/plugin-todo/hooks/config.json"
         self.db_path = "/tmp/webhook_queue.db"
         self.log_file = "/tmp/webhook_queue.log"
         

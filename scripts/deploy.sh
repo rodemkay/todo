@@ -8,7 +8,7 @@ RED='\033[0;31m'
 NC='\033[0m'
 
 # Configuration
-SOURCE_DIR="/home/rodemkay/www/react/todo/plugin"
+SOURCE_DIR="/home/rodemkay/www/react/plugin-todo/plugin"
 STAGING_HOST="rodemkay@100.67.210.46"  # Tailscale IP für bessere Performance
 STAGING_PATH="/var/www/forexsignale/staging/wp-content/plugins/todo"
 OLD_PLUGIN_PATH="/var/www/forexsignale/staging/wp-content/plugins/wp-project-todos"

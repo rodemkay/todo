@@ -26,7 +26,7 @@ CRITICAL: Direct todo status update bypass
 
 ### Neues Hook-System Architektur
 ```
-/home/rodemkay/www/react/todo/hooks/
+/home/rodemkay/www/react/plugin-todo/hooks/
 ├── config.json           # Zentrale Konfiguration
 ├── todo-manager.py       # Hauptlogik für Todo-Verwaltung
 ├── completion-handler.sh # TASK_COMPLETED Watcher
@@ -144,7 +144,7 @@ mv /home/rodemkay/.claude/hooks /home/rodemkay/.claude/hooks.backup_$(date +%Y%m
 ### 2. Installation des neuen Systems
 ```bash
 # Bereits installiert in:
-/home/rodemkay/www/react/todo/hooks/
+/home/rodemkay/www/react/plugin-todo/hooks/
 ```
 
 ### 3. CLI-Tool Update
@@ -201,7 +201,7 @@ cat /tmp/CURRENT_TODO_ID  # Aktuelle Todo-ID
 
 ### Logs prüfen
 ```bash
-tail -f /home/rodemkay/www/react/todo/hooks/logs/todo_$(date +%Y%m%d).log
+tail -f /home/rodemkay/www/react/plugin-todo/hooks/logs/todo_$(date +%Y%m%d).log
 ```
 
 ---

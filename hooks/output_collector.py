@@ -85,6 +85,74 @@ class OutputCollector:
             "action": action
         })
     
+    def generate_markdown_output(self):
+        """Generiert Markdown-Zusammenfassung der Session für bessere Lesbarkeit"""
+        markdown_content = f"""# 📋 Todo #{self.todo_id} - Session Report
+
+## 📊 Session Information
+- **Session Start:** {self.session_start.strftime("%Y-%m-%d %H:%M:%S")}
+- **Session Duration:** {(datetime.now() - self.session_start).total_seconds():.0f} Sekunden
+
+"""
+        
+        # Key Actions
+        if self.outputs['key_actions']:
+            markdown_content += "## 🎯 Hauptaktionen\n\n"
+            for action in self.outputs['key_actions']:
+                markdown_content += f"- `[{action['time']}]` {action['action']}\n"
+            markdown_content += "\n"
+        
+        # Files Created
+        if self.outputs['files_created']:
+            markdown_content += f"## 📁 Erstellte Dateien ({len(self.outputs['files_created'])})\n\n"
+            for file in self.outputs['files_created']:
+                markdown_content += f"- `{file['path']}` [{file['time']}]\n"
+            markdown_content += "\n"
+        
+        # Files Modified
+        if self.outputs['files_modified']:
+            markdown_content += f"## ✏️ Geänderte Dateien ({len(self.outputs['files_modified'])})\n\n"
+            for file in self.outputs['files_modified']:
+                markdown_content += f"- `{file['path']}` [{file['time']}]\n"
+            markdown_content += "\n"
+        
+        # Commands Executed
+        if self.outputs['commands_executed']:
+            markdown_content += f"## 💻 Ausgeführte Befehle ({len(self.outputs['commands_executed'])})\n\n"
+            markdown_content += "Die letzten 10 Befehle:\n\n"
+            for cmd in self.outputs['commands_executed'][-10:]:  # Letzte 10 Befehle
+                status = "✅" if cmd['success'] else "❌"
+                markdown_content += f"{status} `{cmd['command']}` [{cmd['time']}]\n"
+                if cmd.get('output'):
+                    markdown_content += f"   ```\n   {cmd['output'][:200]}\n   ```\n"
+            markdown_content += "\n"
+        
+        # Errors
+        if self.outputs['errors_encountered']:
+            markdown_content += f"## ⚠️ Aufgetretene Fehler ({len(self.outputs['errors_encountered'])})\n\n"
+            for error in self.outputs['errors_encountered']:
+                markdown_content += f"- `[{error['time']}]` {error['error']}\n"
+            markdown_content += "\n"
+        
+        # Raw Output (falls vorhanden)
+        if self.outputs.get('raw_text') and self.outputs['raw_text']:
+            last_output = ''.join(self.outputs['raw_text'][-3:])  # Letzte 3 Captures
+            if last_output:
+                markdown_content += "## 📝 Terminal Output (Auszug)\n\n```\n"
+                markdown_content += last_output[-3000:]  # Letzte 3000 Zeichen
+                markdown_content += "\n```\n"
+        
+        # Speichern als .md Datei
+        md_file = self.session_dir / "output.md"
+        with open(md_file, 'w', encoding='utf-8') as f:
+            f.write(markdown_content)
+        
+        # Update file references für Markdown
+        self.html_file = md_file  # Überschreibe html_file mit md_file für Kompatibilität
+        self.markdown_file = md_file  # Explizite Markdown-Referenz
+            
+        return markdown_content
+    
     def generate_html_output(self):
         """Generiert HTML-Zusammenfassung der Session"""
         html_content = f"""<!DOCTYPE html>
@@ -305,13 +373,14 @@ def collect_outputs_for_todo(todo_id):
             # Command line
             collector.track_command(line[1:].strip())
     
-    # Generiere Outputs
-    html = collector.generate_html_output()
+    # Generiere Outputs - JETZT MARKDOWN STATT HTML!
+    markdown = collector.generate_markdown_output()  # NEU: Markdown statt HTML
     text = collector.generate_text_output()
     summary = collector.generate_summary()
     
     return {
-        'html': html,
+        'markdown': markdown,  # Geändert von 'html' zu 'markdown'
+        'html': markdown,      # Behalte 'html' key für Kompatibilität, nutze aber Markdown-Content
         'text': text,
         'summary': summary,
         'session_dir': str(collector.session_dir)
@@ -323,7 +392,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         todo_id = sys.argv[1]
         results = collect_outputs_for_todo(todo_id)
-        print(f"HTML: {len(results['html'])} chars")
+        print(f"Markdown: {len(results.get('markdown', ''))} chars")
+        print(f"HTML (contains Markdown): {len(results['html'])} chars")
         print(f"Text: {len(results['text'])} chars")
         print(f"Summary: {results['summary']}")
         print(f"Session Dir: {results['session_dir']}")

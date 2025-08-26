@@ -167,7 +167,7 @@
 // WordPress Frontend (PHP)
 class TodoCronManager {
     public function execute_cron_via_python($job_id) {
-        $python_engine = '/home/rodemkay/www/react/todo/cron/cron_daemon.py';
+        $python_engine = '/home/rodemkay/www/react/plugin-todo/cron/cron_daemon.py';
         return shell_exec("python3 $python_engine execute $job_id");
     }
 }

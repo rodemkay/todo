@@ -12,7 +12,7 @@
 ### 1. HAUPTDOKUMENTATIONEN
 
 #### 📋 CLAUDE.md (Hauptinstruktionen)
-**Pfad:** `/home/rodemkay/www/react/todo/CLAUDE.md`  
+**Pfad:** `/home/rodemkay/www/react/plugin-todo/CLAUDE.md`  
 **Status:** ✅ VOLLSTÄNDIG AKTUALISIERT  
 **Wichtigste Updates:**
 - V3.0 Features vollständig dokumentiert
@@ -22,7 +22,7 @@
 - Vollständige Feldladung dokumentiert
 
 #### 📊 CURRENT_STATUS.md (Projektstatus)
-**Pfad:** `/home/rodemkay/www/react/todo/docs/CURRENT_STATUS.md`  
+**Pfad:** `/home/rodemkay/www/react/plugin-todo/docs/CURRENT_STATUS.md`  
 **Status:** ✅ KOMPLETT ÜBERARBEITET  
 **Wichtigste Updates:**
 - 100% Feature-Completeness dokumentiert
@@ -32,7 +32,7 @@
 - Testing-Übersicht mit 100% Pass-Rate
 
 #### 📋 IMPLEMENTATION_PLAN.md (Roadmap)
-**Pfad:** `/home/rodemkay/www/react/todo/docs/IMPLEMENTATION_PLAN.md`  
+**Pfad:** `/home/rodemkay/www/react/plugin-todo/docs/IMPLEMENTATION_PLAN.md`  
 **Status:** ✅ MIT ZUKUNFTS-ROADMAP ERWEITERT  
 **Wichtigste Updates:**
 - Abgeschlossene Phasen 1-7 markiert
@@ -47,7 +47,7 @@
 ### 2. NEUE V3.0 FEATURE-DOKUMENTE
 
 #### 📅 WIEDERVORLAGE_SYSTEM.md
-**Pfad:** `/home/rodemkay/www/react/todo/docs/WIEDERVORLAGE_SYSTEM.md`  
+**Pfad:** `/home/rodemkay/www/react/plugin-todo/docs/WIEDERVORLAGE_SYSTEM.md`  
 **Status:** ✅ BEREITS VORHANDEN  
 **Inhalt:**
 - Option B Implementation (Zusammenfassung mit Links)
@@ -57,7 +57,7 @@
 - Automatisierung und Smart-Terminierung
 
 #### 🔍 SMART_FILTERS.md
-**Pfad:** `/home/rodemkay/www/react/todo/docs/SMART_FILTERS.md`  
+**Pfad:** `/home/rodemkay/www/react/plugin-todo/docs/SMART_FILTERS.md`  
 **Status:** ✅ BEREITS VORHANDEN  
 **Inhalt:**
 - Preset-Filter Definitionen
@@ -67,7 +67,7 @@
 - Performance-Optimierungen
 
 #### 📝 PLAN_EDITOR.md
-**Pfad:** `/home/rodemkay/www/react/todo/docs/PLAN_EDITOR.md`  
+**Pfad:** `/home/rodemkay/www/react/plugin-todo/docs/PLAN_EDITOR.md`  
 **Status:** ✅ BEREITS VORHANDEN  
 **Inhalt:**
 - WYSIWYG-Editor ohne HTML-Komplexität
@@ -145,7 +145,7 @@
 ## 📁 DOKUMENTATIONS-STRUKTUR
 
 ```
-/home/rodemkay/www/react/todo/
+/home/rodemkay/www/react/plugin-todo/
 ├── CLAUDE.md                           # ✅ Hauptinstruktionen (V3.0)
 ├── docs/
 │   ├── CURRENT_STATUS.md              # ✅ Projektstatus (100% Complete)

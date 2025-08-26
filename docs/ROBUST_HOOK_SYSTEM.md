@@ -24,7 +24,7 @@ Nach der Analyse der Probleme mit dem ursprünglichen Hook-System wurde ein komp
 
 ### 3. **Unified Hook System** ✅
 - **Problem:** Zwei konkurrierende Systeme verwirrten
-- **Lösung:** Ein zentrales System in `/home/rodemkay/www/react/todo/hooks/`
+- **Lösung:** Ein zentrales System in `/home/rodemkay/www/react/plugin-todo/hooks/`
 - **Features:**
   - Klarer Workflow
   - Keine Blockierungen
@@ -42,7 +42,7 @@ Nach der Analyse der Probleme mit dem ursprünglichen Hook-System wurde ein komp
 ## 🏗️ System-Architektur
 
 ```
-/home/rodemkay/www/react/todo/hooks/
+/home/rodemkay/www/react/plugin-todo/hooks/
 ├── todo_manager.py       # Hauptlogik mit Output-Collection
 ├── output_collector.py   # Claude-Output-Erfassung
 ├── monitor.py           # System Health-Checks

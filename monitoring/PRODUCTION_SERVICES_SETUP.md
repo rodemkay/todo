@@ -25,7 +25,7 @@ Production Services Hierarchy:
 # /etc/systemd/system/webhook-socket-server.service
 [Unit]
 Description=Webhook Socket Server for Claude CLI Communication
-Documentation=file:///home/rodemkay/www/react/todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
+Documentation=file:///home/rodemkay/www/react/plugin-todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
 After=network-online.target
 Wants=network-online.target
 Requires=tailscaled.service
@@ -34,8 +34,8 @@ Requires=tailscaled.service
 Type=simple
 User=rodemkay
 Group=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/monitoring
-ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/todo/monitoring/socket_server.py
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/monitoring
+ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/plugin-todo/monitoring/socket_server.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5
@@ -46,14 +46,14 @@ StartLimitBurst=3
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/rodemkay/www/react/todo/monitoring /tmp
+ReadWritePaths=/home/rodemkay/www/react/plugin-todo/monitoring /tmp
 PrivateTmp=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 
 # Environment
-Environment=PYTHONPATH=/home/rodemkay/www/react/todo/monitoring
+Environment=PYTHONPATH=/home/rodemkay/www/react/plugin-todo/monitoring
 Environment=SOCKET_PORT=8899
 Environment=SOCKET_HOST=100.89.207.122
 EnvironmentFile=-/home/rodemkay/.env
@@ -77,7 +77,7 @@ WantedBy=multi-user.target
 # /etc/systemd/system/webhook-monitor.service
 [Unit]
 Description=Webhook System Health Monitor
-Documentation=file:///home/rodemkay/www/react/todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
+Documentation=file:///home/rodemkay/www/react/plugin-todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
 After=network-online.target webhook-socket-server.service
 Wants=network-online.target
 Requires=webhook-socket-server.service
@@ -86,8 +86,8 @@ Requires=webhook-socket-server.service
 Type=simple
 User=rodemkay
 Group=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/monitoring
-ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/todo/monitoring/webhook-monitor.py
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/monitoring
+ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/plugin-todo/monitoring/webhook-monitor.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 RestartSec=10
@@ -98,14 +98,14 @@ StartLimitBurst=5
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/rodemkay/www/react/todo/monitoring /home/rodemkay/backups /tmp /var/log
+ReadWritePaths=/home/rodemkay/www/react/plugin-todo/monitoring /home/rodemkay/backups /tmp /var/log
 PrivateTmp=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 
 # Environment
-Environment=PYTHONPATH=/home/rodemkay/www/react/todo/monitoring
+Environment=PYTHONPATH=/home/rodemkay/www/react/plugin-todo/monitoring
 Environment=MONITOR_INTERVAL=30
 Environment=HEALTH_CHECK_PORT=8901
 EnvironmentFile=-/home/rodemkay/.env
@@ -129,7 +129,7 @@ WantedBy=multi-user.target
 # /etc/systemd/system/webhook-queue-manager.service
 [Unit]
 Description=Webhook Task Queue Manager
-Documentation=file:///home/rodemkay/www/react/todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
+Documentation=file:///home/rodemkay/www/react/plugin-todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
 After=network-online.target webhook-socket-server.service
 Wants=network-online.target
 Requires=webhook-socket-server.service
@@ -138,8 +138,8 @@ Requires=webhook-socket-server.service
 Type=simple
 User=rodemkay
 Group=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/monitoring
-ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/todo/monitoring/queue-manager.py
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/monitoring
+ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/plugin-todo/monitoring/queue-manager.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=15
@@ -150,14 +150,14 @@ StartLimitBurst=3
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/rodemkay/www/react/todo/monitoring /tmp
+ReadWritePaths=/home/rodemkay/www/react/plugin-todo/monitoring /tmp
 PrivateTmp=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 
 # Environment
-Environment=PYTHONPATH=/home/rodemkay/www/react/todo/monitoring
+Environment=PYTHONPATH=/home/rodemkay/www/react/plugin-todo/monitoring
 Environment=QUEUE_MAX_SIZE=1000
 Environment=WORKER_THREADS=4
 EnvironmentFile=-/home/rodemkay/.env
@@ -181,7 +181,7 @@ WantedBy=multi-user.target
 # /etc/systemd/system/webhook-backup.service
 [Unit]
 Description=Webhook System Automated Backup
-Documentation=file:///home/rodemkay/www/react/todo/monitoring/BACKUP_RECOVERY_PROCEDURES.md
+Documentation=file:///home/rodemkay/www/react/plugin-todo/monitoring/BACKUP_RECOVERY_PROCEDURES.md
 After=network-online.target
 Wants=network-online.target
 
@@ -189,8 +189,8 @@ Wants=network-online.target
 Type=oneshot
 User=rodemkay
 Group=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/monitoring/backup-scripts
-ExecStart=/home/rodemkay/www/react/todo/monitoring/backup-scripts/master-backup.sh
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts
+ExecStart=/home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/master-backup.sh
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=webhook-backup
@@ -199,7 +199,7 @@ SyslogIdentifier=webhook-backup
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/rodemkay/backups /home/rodemkay/www/react/todo /tmp
+ReadWritePaths=/home/rodemkay/backups /home/rodemkay/www/react/plugin-todo /tmp
 PrivateTmp=true
 
 # Environment
@@ -215,7 +215,7 @@ WantedBy=multi-user.target
 # /etc/systemd/system/webhook-backup.timer
 [Unit]
 Description=Run Webhook Backup Daily
-Documentation=file:///home/rodemkay/www/react/todo/monitoring/BACKUP_RECOVERY_PROCEDURES.md
+Documentation=file:///home/rodemkay/www/react/plugin-todo/monitoring/BACKUP_RECOVERY_PROCEDURES.md
 Requires=webhook-backup.service
 
 [Timer]
@@ -234,7 +234,7 @@ WantedBy=timers.target
 # /etc/systemd/system/webhook-log-manager.service
 [Unit]
 Description=Webhook System Log Manager
-Documentation=file:///home/rodemkay/www/react/todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
+Documentation=file:///home/rodemkay/www/react/plugin-todo/monitoring/FINAL_SYSTEM_ARCHITECTURE.md
 After=network-online.target
 Wants=network-online.target
 
@@ -242,8 +242,8 @@ Wants=network-online.target
 Type=simple
 User=rodemkay
 Group=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/monitoring
-ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/todo/monitoring/log-manager.py
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/monitoring
+ExecStart=/usr/bin/python3 -u /home/rodemkay/www/react/plugin-todo/monitoring/log-manager.py
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=30
@@ -254,14 +254,14 @@ StartLimitBurst=3
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/home/rodemkay/www/react/todo/monitoring /var/log /home/rodemkay/backups /tmp
+ReadWritePaths=/home/rodemkay/www/react/plugin-todo/monitoring /var/log /home/rodemkay/backups /tmp
 PrivateTmp=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
 ProtectControlGroups=true
 
 # Environment
-Environment=PYTHONPATH=/home/rodemkay/www/react/todo/monitoring
+Environment=PYTHONPATH=/home/rodemkay/www/react/plugin-todo/monitoring
 Environment=LOG_RETENTION_DAYS=30
 Environment=LOG_ROTATION_SIZE=100M
 EnvironmentFile=-/home/rodemkay/.env
@@ -285,7 +285,7 @@ WantedBy=multi-user.target
 # /etc/systemd/system/webhook-security-monitor.service
 [Unit]
 Description=Webhook System Security Monitor
-Documentation=file:///home/rodemkay/www/react/todo/monitoring/SECURITY_AUDIT_REPORT.md
+Documentation=file:///home/rodemkay/www/react/plugin-todo/monitoring/SECURITY_AUDIT_REPORT.md
 After=network-online.target
 Wants=network-online.target
 
@@ -293,8 +293,8 @@ Wants=network-online.target
 Type=simple
 User=rodemkay
 Group=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/monitoring/security-scripts
-ExecStart=/home/rodemkay/www/react/todo/monitoring/security-scripts/security-monitor.sh
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/monitoring/security-scripts
+ExecStart=/home/rodemkay/www/react/plugin-todo/monitoring/security-scripts/security-monitor.sh
 Restart=always
 RestartSec=300
 StartLimitInterval=1800s
@@ -329,7 +329,7 @@ WantedBy=multi-user.target
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/service-scripts/webhook-services.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/service-scripts/webhook-services.sh
 
 # Webhook Services Management Script
 SERVICES=(
@@ -515,7 +515,7 @@ show_logs() {
     free -h
     echo ""
     echo "Disk usage:"
-    df -h /home/rodemkay/backups /home/rodemkay/www/react/todo
+    df -h /home/rodemkay/backups /home/rodemkay/www/react/plugin-todo
 }
 
 # Main script logic
@@ -551,7 +551,7 @@ esac
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/service-scripts/install-services.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/service-scripts/install-services.sh
 
 # Webhook Services Installation Script
 echo "🔧 Installing Webhook System Services..."
@@ -565,16 +565,16 @@ fi
 
 # Create necessary directories
 echo "📁 Creating service directories..."
-mkdir -p /home/rodemkay/www/react/todo/monitoring/{service-scripts,security-scripts,backup-scripts,recovery-scripts}
+mkdir -p /home/rodemkay/www/react/plugin-todo/monitoring/{service-scripts,security-scripts,backup-scripts,recovery-scripts}
 mkdir -p /home/rodemkay/backups/{database,plugin,system-config,monitoring,hourly}
 mkdir -p /home/rodemkay/backups/file-hashes
 
 # Set proper permissions
 echo "🔒 Setting permissions..."
-chmod 755 /home/rodemkay/www/react/todo/monitoring/service-scripts/*
-chmod 755 /home/rodemkay/www/react/todo/monitoring/security-scripts/*
-chmod 755 /home/rodemkay/www/react/todo/monitoring/backup-scripts/*
-chmod 755 /home/rodemkay/www/react/todo/monitoring/recovery-scripts/*
+chmod 755 /home/rodemkay/www/react/plugin-todo/monitoring/service-scripts/*
+chmod 755 /home/rodemkay/www/react/plugin-todo/monitoring/security-scripts/*
+chmod 755 /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/*
+chmod 755 /home/rodemkay/www/react/plugin-todo/monitoring/recovery-scripts/*
 chmod 700 /home/rodemkay/backups
 
 # Copy service files to systemd directory
@@ -589,7 +589,7 @@ SERVICE_FILES=(
     "webhook-security-monitor.service"
 )
 
-SERVICE_DIR="/home/rodemkay/www/react/todo/monitoring/service-configs"
+SERVICE_DIR="/home/rodemkay/www/react/plugin-todo/monitoring/service-configs"
 mkdir -p "$SERVICE_DIR"
 
 for service_file in "${SERVICE_FILES[@]}"; do
@@ -689,7 +689,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/service-scripts/health-check.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/service-scripts/health-check.sh
 
 # Comprehensive health check for all webhook services
 HEALTH_LOG="/home/rodemkay/backups/health-check.log"
@@ -824,7 +824,7 @@ fi
 
 # Check log file sizes
 echo "📄 Checking log file sizes..." >> "$HEALTH_LOG"
-LARGE_LOGS=$(find /var/log /home/rodemkay/www/react/todo/monitoring -name "*.log" -size +100M 2>/dev/null | wc -l)
+LARGE_LOGS=$(find /var/log /home/rodemkay/www/react/plugin-todo/monitoring -name "*.log" -size +100M 2>/dev/null | wc -l)
 if [[ $LARGE_LOGS -gt 0 ]]; then
     echo "⚠️ Found $LARGE_LOGS large log files (>100MB)" >> "$HEALTH_LOG"
     if [[ "$OVERALL_HEALTH" == "HEALTHY" ]]; then
@@ -881,7 +881,7 @@ esac
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/service-scripts/deploy-production.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/service-scripts/deploy-production.sh
 
 echo "🚀 Starting Production Deployment..."
 
@@ -919,7 +919,7 @@ sudo systemctl start webhook-backup.service
 # Step 7: Setup monitoring
 echo "7️⃣ Setting up monitoring..."
 # Add health check to cron
-(crontab -l 2>/dev/null; echo "*/5 * * * * /home/rodemkay/www/react/todo/monitoring/service-scripts/health-check.sh") | crontab -
+(crontab -l 2>/dev/null; echo "*/5 * * * * /home/rodemkay/www/react/plugin-todo/monitoring/service-scripts/health-check.sh") | crontab -
 
 echo "✅ Production deployment completed successfully!"
 echo ""

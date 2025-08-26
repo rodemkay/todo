@@ -13,7 +13,7 @@
 │  - Claude Code CLI (tmux session "claude" - LEFT PANE)      │
 │  - Webhook Server (Port 8089)                              │
 │  - Mount Points zu Hetzner                                 │
-│  - Working Dir: /home/rodemkay/www/react/todo/            │
+│  - Working Dir: /home/rodemkay/www/react/plugin-todo/            │
 └────────────┬────────────────────────────────────────────────┘
              │
              │ SSH/SSHFS Mount
@@ -55,7 +55,7 @@
 
 ### Auf Ryzen Server
 ```
-/home/rodemkay/www/react/todo/          # Hauptprojekt
+/home/rodemkay/www/react/plugin-todo/          # Hauptprojekt
 ├── plugin/                              # Plugin Source Code
 ├── hooks/                               # Hook System
 ├── cli/                                 # CLI Tools
@@ -105,7 +105,7 @@ const WEBHOOK_CONFIG = {
 ### 1. Development (Ryzen)
 ```bash
 # Arbeiten im lokalen Verzeichnis
-cd /home/rodemkay/www/react/todo
+cd /home/rodemkay/www/react/plugin-todo
 # Code bearbeiten
 vim plugin/includes/class-admin.php
 ```
@@ -203,7 +203,7 @@ ps aux | grep webhook
 netstat -tlnp | grep 8089
 
 # Webhook neu starten
-cd /home/rodemkay/www/react/todo
+cd /home/rodemkay/www/react/plugin-todo
 python3 webhook-server.py &
 
 # Claude Session prüfen (muss im LINKEN PANE sein!)

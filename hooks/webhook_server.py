@@ -134,7 +134,7 @@ class WebhookHandler(BaseHTTPRequestHandler):
         """Führt Command asynchron aus"""
         try:
             # Working Directory setzen
-            work_dir = '/home/rodemkay/www/react/todo'
+            work_dir = '/home/rodemkay/www/react/plugin-todo'
             
             logger.info(f"Executing command: {command} (source: {source})")
             

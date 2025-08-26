@@ -4,8 +4,8 @@
 # Wird aufgerufen wenn TASK_COMPLETED geschrieben wird
 
 TASK_FILE="/tmp/TASK_COMPLETED"
-MANAGER="/home/rodemkay/www/react/todo/hooks/todo-manager.py"
-LOG_FILE="/home/rodemkay/www/react/todo/hooks/logs/completion.log"
+MANAGER="/home/rodemkay/www/react/plugin-todo/hooks/todo_manager.py"
+LOG_FILE="/home/rodemkay/www/react/plugin-todo/hooks/logs/completion.log"
 
 # Logging
 log_message() {

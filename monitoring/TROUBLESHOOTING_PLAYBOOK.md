@@ -99,7 +99,7 @@ tailscale status
 
 ```bash
 # If Ryzen server accessible:
-cd /home/rodemkay/www/react/todo/monitoring
+cd /home/rodemkay/www/react/plugin-todo/monitoring
 ./recovery-scripts/disaster-recovery.sh latest
 
 # If Hetzner server accessible but services down:
@@ -335,7 +335,7 @@ ps aux | grep socket_server.py
 sudo journalctl -u webhook-socket-server -n 50
 
 # Step 5: Test Python imports
-python3 -c "import sys; sys.path.append('/home/rodemkay/www/react/todo/monitoring'); import socket_server"
+python3 -c "import sys; sys.path.append('/home/rodemkay/www/react/plugin-todo/monitoring'); import socket_server"
 ```
 
 **Resolution Steps:**
@@ -347,8 +347,8 @@ sleep 5
 systemctl status webhook-socket-server
 
 # Solution 2: Check and fix file permissions
-chmod 755 /home/rodemkay/www/react/todo/monitoring/socket_server.py
-chown rodemkay:rodemkay /home/rodemkay/www/react/todo/monitoring/socket_server.py
+chmod 755 /home/rodemkay/www/react/plugin-todo/monitoring/socket_server.py
+chown rodemkay:rodemkay /home/rodemkay/www/react/plugin-todo/monitoring/socket_server.py
 
 # Solution 3: Kill any hanging processes
 pkill -f socket_server.py
@@ -489,7 +489,7 @@ find /home/rodemkay/backups -name "*.sql.gz" -mtime +30 -delete
 find /home/rodemkay/backups -name "*.tar.gz" -mtime +30 -delete
 
 # Solution 2: Fix permissions
-chmod 755 /home/rodemkay/www/react/todo/monitoring/backup-scripts/*.sh
+chmod 755 /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/*.sh
 chown -R rodemkay:rodemkay /home/rodemkay/backups
 
 # Solution 3: Test database connectivity
@@ -592,7 +592,7 @@ iostat 1 5
 
 # Step 3: Check queue sizes
 ls -la /tmp/webhook_queue_* 2>/dev/null | wc -l
-wc -l /home/rodemkay/www/react/todo/monitoring/*.log
+wc -l /home/rodemkay/www/react/plugin-todo/monitoring/*.log
 
 # Step 4: Profile database performance
 ssh rodemkay@159.69.157.54 "mysql -u ForexSignale -p -e 'SHOW PROCESSLIST;'"
@@ -685,7 +685,7 @@ curl http://100.89.207.122:8901/refresh
 
 ```bash
 # Set up continuous monitoring
-crontab -l | grep -q health-check || (crontab -l; echo "*/5 * * * * /home/rodemkay/www/react/todo/monitoring/service-scripts/health-check.sh") | crontab -
+crontab -l | grep -q health-check || (crontab -l; echo "*/5 * * * * /home/rodemkay/www/react/plugin-todo/monitoring/service-scripts/health-check.sh") | crontab -
 
 # Disk space monitoring
 crontab -l | grep -q disk-space || (crontab -l; echo "0 */6 * * * df -h /home/rodemkay/backups | awk 'NR==2{print \$5}' | sed 's/%//' | awk '{if(\$1 > 80) print \"WARNING: Disk usage at \" \$1 \"%\"}'") | crontab -

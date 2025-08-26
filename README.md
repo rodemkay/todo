@@ -42,7 +42,7 @@ Im WordPress Admin unter Plugins → TODO aktivieren.
 chmod +x cli/todo
 
 # Symlink erstellen (optional)
-ln -s /home/rodemkay/www/react/todo/cli/todo ~/bin/todo
+ln -s /home/rodemkay/www/react/plugin-todo/cli/todo ~/bin/todo
 ```
 
 ## 🖥️ Verwendung

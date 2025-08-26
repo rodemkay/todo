@@ -63,7 +63,7 @@ Das Todo Cron System ermöglicht **zeitgesteuerte Aufgaben** direkt über das Wo
 sudo systemctl status todo-cron
 
 # Live-Logs  
-tail -f /home/rodemkay/www/react/todo/cron/logs/cron_engine.log
+tail -f /home/rodemkay/www/react/plugin-todo/cron/logs/cron_engine.log
 ```
 
 ---
@@ -84,7 +84,7 @@ WordPress Frontend          Python Backend             System Integration
 
 ### **Dateienstruktur:**
 ```
-📁 /home/rodemkay/www/react/todo/cron/
+📁 /home/rodemkay/www/react/plugin-todo/cron/
 ├── cron_engine.py          # 🚀 Haupt-Engine (Python)
 ├── cron_scheduler.py       # ⏰ Schedule-Management  
 ├── cron_executor.py        # ⚡ Command-Execution
@@ -147,7 +147,7 @@ After=network.target
 [Service]
 Type=simple
 User=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/cron
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/cron
 ExecStart=/usr/bin/python3 cron_engine.py
 Restart=always
 RestartSec=10
@@ -206,19 +206,19 @@ python3 /home/rodemkay/scripts/sync_api_data.py --endpoint=https://api.forexsign
 sudo systemctl status todo-cron
 
 # 2. Logs checken
-tail -f /home/rodemkay/www/react/todo/cron/logs/error.log
+tail -f /home/rodemkay/www/react/plugin-todo/cron/logs/error.log
 
 # 3. Service neu starten
 sudo systemctl restart todo-cron
 
 # 4. Manual Test der Engine
-cd /home/rodemkay/www/react/todo/cron && python3 cron_engine.py
+cd /home/rodemkay/www/react/plugin-todo/cron && python3 cron_engine.py
 ```
 
 ### **Problem: Befehl schlägt fehl**
 ```bash
 # 1. Error-Log analysieren
-cat /home/rodemkay/www/react/todo/cron/logs/error.log | grep "ERROR"
+cat /home/rodemkay/www/react/plugin-todo/cron/logs/error.log | grep "ERROR"
 
 # 2. Befehl manuell testen
 cd /working/directory && your-command
@@ -262,13 +262,13 @@ python3 -c "import pymysql; print('DB connection OK')"
 ps aux | grep cron_engine.py
 
 # Live-Logs verfolgen
-tail -f /home/rodemkay/www/react/todo/cron/logs/cron_engine.log
+tail -f /home/rodemkay/www/react/plugin-todo/cron/logs/cron_engine.log
 
 # Execution History (letzte Ausführungen)  
-tail -n 20 /home/rodemkay/www/react/todo/cron/logs/execution_history.log
+tail -n 20 /home/rodemkay/www/react/plugin-todo/cron/logs/execution_history.log
 
 # Error-Log (nur Fehler)
-grep "ERROR" /home/rodemkay/www/react/todo/cron/logs/error.log
+grep "ERROR" /home/rodemkay/www/react/plugin-todo/cron/logs/error.log
 ```
 
 ### **Performance-Metriken:**
@@ -357,7 +357,7 @@ wp todo cleanup --older-than=30days
 ### **1. Prerequisites installieren:**
 ```bash
 # Python Dependencies
-pip3 install -r /home/rodemkay/www/react/todo/cron/requirements.txt
+pip3 install -r /home/rodemkay/www/react/plugin-todo/cron/requirements.txt
 
 # Benötigte Packages:
 # - croniter (für Cron Expression Parsing)
@@ -368,7 +368,7 @@ pip3 install -r /home/rodemkay/www/react/todo/cron/requirements.txt
 ### **2. Systemd Service einrichten:**
 ```bash
 # Service-Datei kopieren
-sudo cp /home/rodemkay/www/react/todo/cron/todo-cron.service /etc/systemd/system/
+sudo cp /home/rodemkay/www/react/plugin-todo/cron/todo-cron.service /etc/systemd/system/
 
 # Service aktivieren & starten
 sudo systemctl daemon-reload

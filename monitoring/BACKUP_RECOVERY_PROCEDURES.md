@@ -40,7 +40,7 @@ This document outlines the complete backup and recovery procedures for the WordP
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/backup-database.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/backup-database.sh
 
 # Configuration
 DB_NAME="staging_forexsignale"
@@ -82,7 +82,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/backup-plugin.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/backup-plugin.sh
 
 # Configuration
 PLUGIN_DIR="/var/www/forexsignale/staging/wp-content/plugins/todo"
@@ -123,11 +123,11 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/backup-system-config.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/backup-system-config.sh
 
 # Configuration
 CONFIG_DIRS=(
-    "/home/rodemkay/www/react/todo"
+    "/home/rodemkay/www/react/plugin-todo"
     "/etc/systemd/system/webhook-*.service"
     "/etc/nginx/sites-available/webhook-*"
     "/etc/ssl/webhook-system"
@@ -194,7 +194,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/master-backup.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/master-backup.sh
 
 # Configuration
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -299,10 +299,10 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/backup-monitoring-data.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/backup-monitoring-data.sh
 
 # Configuration
-MONITORING_DIR="/home/rodemkay/www/react/todo/monitoring"
+MONITORING_DIR="/home/rodemkay/www/react/plugin-todo/monitoring"
 BACKUP_DIR="/home/rodemkay/backups/monitoring"
 RETENTION_DAYS=7
 
@@ -342,7 +342,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/recovery-scripts/restore-database.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/recovery-scripts/restore-database.sh
 
 # Usage: ./restore-database.sh [backup_file|timestamp|latest]
 
@@ -417,7 +417,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/recovery-scripts/restore-plugin.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/recovery-scripts/restore-plugin.sh
 
 # Usage: ./restore-plugin.sh [backup_file|timestamp|latest]
 
@@ -511,7 +511,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/recovery-scripts/disaster-recovery.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/recovery-scripts/disaster-recovery.sh
 
 # Complete system disaster recovery
 # Usage: ./disaster-recovery.sh [backup_timestamp|latest]
@@ -687,7 +687,7 @@ exit 0
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/failover-scripts/automatic-failover.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/failover-scripts/automatic-failover.sh
 
 # Automatic failover system for critical service failures
 LOG_FILE="/home/rodemkay/backups/failover.log"
@@ -749,7 +749,7 @@ done
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/failover-scripts/automatic-service-recovery.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/failover-scripts/automatic-service-recovery.sh
 
 echo "🔄 Starting automatic service recovery..."
 
@@ -830,32 +830,32 @@ fi
 
 ```bash
 # Add to crontab: crontab -e
-# /home/rodemkay/www/react/todo/monitoring/cron-jobs.txt
+# /home/rodemkay/www/react/plugin-todo/monitoring/cron-jobs.txt
 
 # Hourly backup of critical data
-0 * * * * /home/rodemkay/www/react/todo/monitoring/backup-scripts/critical-backup.sh
+0 * * * * /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/critical-backup.sh
 
 # Daily full backup at 3 AM
-0 3 * * * /home/rodemkay/www/react/todo/monitoring/backup-scripts/master-backup.sh
+0 3 * * * /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/master-backup.sh
 
 # Weekly backup verification on Sundays at 4 AM  
-0 4 * * 0 /home/rodemkay/www/react/todo/monitoring/backup-scripts/verify-backups.sh
+0 4 * * 0 /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/verify-backups.sh
 
 # Monthly disaster recovery test on 1st Sunday at 6 AM
-0 6 1-7 * 0 /home/rodemkay/www/react/todo/monitoring/recovery-scripts/test-disaster-recovery.sh
+0 6 1-7 * 0 /home/rodemkay/www/react/plugin-todo/monitoring/recovery-scripts/test-disaster-recovery.sh
 
 # Daily cleanup of old temporary files
-30 2 * * * /home/rodemkay/www/react/todo/monitoring/maintenance-scripts/cleanup-temp-files.sh
+30 2 * * * /home/rodemkay/www/react/plugin-todo/monitoring/maintenance-scripts/cleanup-temp-files.sh
 
 # Continuous health monitoring (every 5 minutes)
-*/5 * * * * /home/rodemkay/www/react/todo/monitoring/failover-scripts/health-monitor.sh
+*/5 * * * * /home/rodemkay/www/react/plugin-todo/monitoring/failover-scripts/health-monitor.sh
 ```
 
 ### Critical Backup Script (Hourly)
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/critical-backup.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/critical-backup.sh
 
 # Hourly backup of only critical data
 BACKUP_DIR="/home/rodemkay/backups/hourly"
@@ -868,7 +868,7 @@ ssh rodemkay@159.69.157.54 "mysqldump -u ForexSignale -p$(grep DB_PASS /home/rod
 
 # Backup critical config files
 tar -czf "$BACKUP_DIR/config_${TIMESTAMP}.tar.gz" \
-    /home/rodemkay/www/react/todo/monitoring/monitoring-config.json \
+    /home/rodemkay/www/react/plugin-todo/monitoring/monitoring-config.json \
     /home/rodemkay/.env \
     2>/dev/null || true
 
@@ -885,7 +885,7 @@ echo "$(date): Hourly critical backup completed" >> "$BACKUP_DIR/backup.log"
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/verify-backups.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/verify-backups.sh
 
 # Weekly backup verification script
 BACKUP_DIRS=(
@@ -985,7 +985,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/backup-scripts/backup-status.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/backup-scripts/backup-status.sh
 
 # Generate backup status report
 REPORT_FILE="/home/rodemkay/backups/status-report.html"

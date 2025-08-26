@@ -92,7 +92,7 @@ ssh rodemkay@159.69.157.54 "cd /var/www/forexsignale/staging && wp db query 'SEL
 cat /tmp/CURRENT_TODO_ID
 
 # Manuell abschließen
-python3 /home/rodemkay/www/react/todo/hooks/todo-manager.py complete
+python3 /home/rodemkay/www/react/plugin-todo/hooks/todo-manager.py complete
 ```
 
 ## Migration vom alten System

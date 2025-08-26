@@ -1,0 +1,297 @@
+{
+  "$schema": "project-config-schema.json",
+  "version": "1.0.0",
+  "last_updated": "2024-01-24",
+  "description": "Zentrale Konfigurationsdatei für alle Claude-Projekte",
+  
+  "projects": {
+    "plugin-todo": {
+      "name": "Todo Management System",
+      "description": "WordPress Plugin für Todo-Verwaltung mit Remote Control für Claude CLI",
+      "type": "wordpress-plugin",
+      "priority": 1,
+      "status": "active",
+      "version": "3.0.0",
+      
+      "directories": {
+        "working_directory": "/home/rodemkay/www/react/plugin-todo",
+        "mount_staging": "/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/wp-content/plugins/todo",
+        "mount_live": "/home/rodemkay/www/react/mounts/hetzner/forexsignale/wp-content/plugins/todo",
+        "documentation": "/home/rodemkay/www/react/plugin-todo/docs",
+        "hooks": "/home/rodemkay/www/react/plugin-todo/hooks",
+        "scripts": "/home/rodemkay/www/react/plugin-todo/scripts",
+        "tests": "/home/rodemkay/www/react/plugin-todo/tests"
+      },
+      
+      "config_files": {
+        "claude_md": "/home/rodemkay/www/react/plugin-todo/CLAUDE.md",
+        "package_json": "/home/rodemkay/www/react/plugin-todo/package.json",
+        "env_file": null
+      },
+      
+      "tmux": {
+        "session_name": "claude",
+        "window_name": "todo-main",
+        "pane_target": "left"
+      },
+      
+      "startup_commands": [
+        "cd /home/rodemkay/www/react/plugin-todo",
+        "./todo status"
+      ],
+      
+      "environment_variables": {
+        "PROJECT_NAME": "plugin-todo",
+        "PLUGIN_PATH": "/var/www/forexsignale/staging/wp-content/plugins/todo",
+        "DB_NAME": "staging_forexsignale",
+        "DB_PREFIX": "stage_",
+        "WP_PATH": "/var/www/forexsignale/staging"
+      },
+      
+      "mcp_servers": {
+        "required": ["filesystem", "playwright"],
+        "optional": ["context7", "shadcn-ui"]
+      },
+      
+      "database": {
+        "name": "staging_forexsignale",
+        "prefix": "stage_",
+        "main_table": "stage_project_todos",
+        "host": "100.67.210.46",
+        "user": "ForexSignale"
+      },
+      
+      "remote_servers": {
+        "hetzner_staging": {
+          "host": "159.69.157.54",
+          "tailscale_ip": "100.67.210.46",
+          "user": "rodemkay",
+          "path": "/var/www/forexsignale/staging",
+          "mount_local": "/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging"
+        },
+        "hetzner_live": {
+          "host": "159.69.157.54", 
+          "tailscale_ip": "100.67.210.46",
+          "user": "rodemkay",
+          "path": "/var/www/forexsignale",
+          "mount_local": "/home/rodemkay/www/react/mounts/hetzner/forexsignale",
+          "readonly": true
+        }
+      },
+      
+      "workflows": {
+        "deploy": "rsync -avz plugin/ rodemkay@159.69.157.54:/var/www/forexsignale/staging/wp-content/plugins/todo/",
+        "test": "npm test",
+        "backup": "./scripts/backup.sh",
+        "documentation": "./scripts/generate_task_documentation.sh"
+      },
+      
+      "cli_tools": {
+        "main": "./todo",
+        "monitor": "./todo monitor", 
+        "test": "./todo test",
+        "fix": "./todo fix"
+      },
+      
+      "webhook": {
+        "enabled": true,
+        "trigger_file": "/uploads/claude_trigger.txt",
+        "watch_script": "/home/rodemkay/www/react/watch-hetzner-trigger.sh",
+        "port": 8089
+      }
+    },
+
+    "forexsignale-magazine": {
+      "name": "ForexSignale Magazine",
+      "description": "WordPress Website im Wall Street Journal Stil mit React-basierten Gutenberg Blocks",
+      "type": "wordpress-website", 
+      "priority": 2,
+      "status": "active",
+      "version": "1.0.0",
+      
+      "directories": {
+        "working_directory": "/home/rodemkay/www/react",
+        "mount_staging": "/home/rodemkay/www/react/mounts/hetzner-staging",
+        "mount_live": "/home/rodemkay/www/react/mounts/hetzner-live",
+        "documentation": "/home/rodemkay/www/react/documentation",
+        "automation": "/home/rodemkay/www/react/automation",
+        "backup": "/home/rodemkay/www/react/backup"
+      },
+      
+      "config_files": {
+        "claude_md": "/home/rodemkay/www/react/CLAUDE.md",
+        "package_json": "/home/rodemkay/www/react/package.json", 
+        "env_file": "/home/rodemkay/.claude/.env"
+      },
+      
+      "tmux": {
+        "session_name": "claude",
+        "window_name": "forexsignale",
+        "pane_target": "main"
+      },
+      
+      "startup_commands": [
+        "cd /home/rodemkay/www/react",
+        "git status"
+      ],
+      
+      "environment_variables": {
+        "PROJECT_NAME": "forexsignale-magazine",
+        "STAGING_URL": "https://forexsignale.trade/staging",
+        "LIVE_URL": "https://forexsignale.trade",
+        "STAGING_PATH": "/var/www/forexsignale/staging",
+        "LIVE_PATH": "/var/www/forexsignale"
+      },
+      
+      "mcp_servers": {
+        "required": ["filesystem", "playwright", "puppeteer"],
+        "optional": ["context7", "shadcn-ui", "youtube-transcript"]
+      },
+      
+      "remote_servers": {
+        "hetzner_staging": {
+          "host": "159.69.157.54",
+          "tailscale_ip": "100.67.210.46", 
+          "user": "rodemkay",
+          "path": "/var/www/forexsignale/staging",
+          "mount_local": "/home/rodemkay/www/react/mounts/hetzner-staging"
+        },
+        "hetzner_live": {
+          "host": "159.69.157.54",
+          "tailscale_ip": "100.67.210.46",
+          "user": "rodemkay", 
+          "path": "/var/www/forexsignale",
+          "mount_local": "/home/rodemkay/www/react/mounts/hetzner-live",
+          "readonly": true
+        }
+      },
+      
+      "workflows": {
+        "staging_deploy": "rsync -avz --exclude='node_modules/' . rodemkay@159.69.157.54:/var/www/forexsignale/staging/",
+        "test_staging": "playwright test --config=staging",
+        "screenshot": "./scripts/take_screenshot.py",
+        "performance_test": "lighthouse https://forexsignale.trade/staging"
+      }
+    },
+
+    "article-builder": {
+      "name": "Article Builder Plugin",
+      "description": "WordPress Plugin für KI-gestützte Artikel-Erstellung mit MCP Integration",
+      "type": "wordpress-plugin",
+      "priority": 3,
+      "status": "active", 
+      "version": "2.0.0",
+      
+      "directories": {
+        "working_directory": "/home/rodemkay/www/react/plugin-article",
+        "mount_staging": "/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/wp-content/plugins/article-builder",
+        "build_output": "/home/rodemkay/www/react/plugin-article/dist",
+        "assets": "/home/rodemkay/www/react/plugin-article/assets"
+      },
+      
+      "config_files": {
+        "claude_md": "/home/rodemkay/www/react/plugin-article/CLAUDE.md",
+        "package_json": "/home/rodemkay/www/react/plugin-article/package.json",
+        "webpack_config": "/home/rodemkay/www/react/plugin-article/webpack.config.js"
+      },
+      
+      "tmux": {
+        "session_name": "claude", 
+        "window_name": "article-builder",
+        "pane_target": "main"
+      },
+      
+      "startup_commands": [
+        "cd /home/rodemkay/www/react/plugin-article",
+        "npm run status"
+      ],
+      
+      "environment_variables": {
+        "PROJECT_NAME": "article-builder",
+        "PLUGIN_PATH": "/var/www/forexsignale/staging/wp-content/plugins/article-builder",
+        "MCP_SERVER_PORT": "8090"
+      },
+      
+      "mcp_servers": {
+        "required": ["filesystem", "context7"],
+        "optional": ["youtube-transcript", "shadcn-ui"]
+      },
+      
+      "build_system": {
+        "type": "webpack",
+        "commands": {
+          "build": "npm run build",
+          "dev": "npm run dev",
+          "watch": "npm run watch"
+        },
+        "output_path": "dist/"
+      },
+      
+      "workflows": {
+        "build": "npm run build",
+        "deploy": "npm run deploy", 
+        "test": "npm run test",
+        "dev_watch": "npm run watch"
+      }
+    }
+  },
+
+  "global_config": {
+    "default_project": "plugin-todo",
+    "auto_detect_enabled": true,
+    "validation_enabled": true,
+    "logging_enabled": true,
+    "log_file": "/tmp/claude-project-config.log",
+    
+    "network": {
+      "prefer_tailscale": true,
+      "ryzen_ip": "100.89.207.122", 
+      "hetzner_ip": "100.67.210.46",
+      "hetzner_public": "159.69.157.54"
+    },
+    
+    "tmux": {
+      "default_session": "claude",
+      "socket_name": "claude-projects"
+    },
+    
+    "common_paths": {
+      "home": "/home/rodemkay",
+      "projects_root": "/home/rodemkay/www/react",
+      "mounts_root": "/home/rodemkay/www/react/mounts", 
+      "scripts_global": "/home/rodemkay/www/react/scripts",
+      "logs": "/tmp"
+    },
+    
+    "common_mcp_servers": [
+      "filesystem",
+      "playwright", 
+      "puppeteer",
+      "context7",
+      "shadcn-ui",
+      "youtube-transcript"
+    ]
+  },
+  
+  "scope_mappings": {
+    "Website": ["forexsignale-magazine"],
+    "Plugin Development": ["plugin-todo", "article-builder"],
+    "WordPress": ["forexsignale-magazine", "plugin-todo", "article-builder"],
+    "Frontend": ["forexsignale-magazine", "article-builder"],
+    "Backend": ["plugin-todo"],
+    "Full-Stack": ["forexsignale-magazine", "plugin-todo", "article-builder"],
+    "DevOps": ["forexsignale-magazine"],
+    "Design": ["forexsignale-magazine", "article-builder"],
+    "Testing": ["plugin-todo", "article-builder"],
+    "Documentation": ["plugin-todo", "forexsignale-magazine", "article-builder"]
+  },
+  
+  "path_patterns": {
+    "/home/rodemkay/www/react/plugin-todo/**": "plugin-todo",
+    "/home/rodemkay/www/react/plugin-article/**": "article-builder", 
+    "/home/rodemkay/www/react/[!plugin-]*/**": "forexsignale-magazine",
+    "/var/www/forexsignale/staging/wp-content/plugins/todo/**": "plugin-todo",
+    "/var/www/forexsignale/staging/wp-content/plugins/article-builder/**": "article-builder",
+    "/var/www/forexsignale/staging/**": "forexsignale-magazine"
+  }
+}

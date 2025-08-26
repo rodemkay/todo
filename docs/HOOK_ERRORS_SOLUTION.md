@@ -22,7 +22,7 @@ Dummy-Dateien erstellen die nichts tun → Das ist Müll!
 Claude Code sollte eine Einstellung haben um Hooks zu deaktivieren.
 
 ### Option 2: Eigenes Hook-System nutzen
-Unser `/home/rodemkay/www/react/todo/hooks/` System funktioniert bereits gut:
+Unser `/home/rodemkay/www/react/plugin-todo/hooks/` System funktioniert bereits gut:
 - todo_manager.py
 - output_collector.py
 - monitor.py

@@ -12,13 +12,19 @@ PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 # Pfade
-TODO_DIR="/home/rodemkay/www/react/todo"
+TODO_DIR="/home/rodemkay/www/react/plugin-todo"
 HOOK_DIR="$TODO_DIR/hooks"
 MANAGER="$HOOK_DIR/todo_manager.py"
 MONITOR="$HOOK_DIR/monitor.py"
 TESTER="$HOOK_DIR/test-suite.py"
 COMPLETION_MONITOR="$HOOK_DIR/completion_monitor.py"
 EMERGENCY_HANDLER="$HOOK_DIR/emergency_handlers.py"
+
+# Session-Switching Pfade
+SESSION_SWITCHER="$TODO_DIR/claude-switch.sh"
+PROJECT_DETECTOR="$TODO_DIR/project-detector.sh"
+SESSION_MANAGER="$TODO_DIR/session-manager.sh"
+TMUX_CONTROLLER="$TODO_DIR/tmux-controller-v2.sh"  # Neue Version ohne Health-Check
 
 # Prüfe Python3
 if ! command -v python3 &> /dev/null; then
@@ -31,6 +37,36 @@ if [ ! -f "$MANAGER" ]; then
     echo -e "${RED}Error: Todo manager not found at $MANAGER${NC}"
     exit 1
 fi
+
+# Session-Switching Funktionen
+check_project_session() {
+    # Nur prüfen wenn Session-Switcher verfügbar ist
+    if [[ ! -f "$SESSION_SWITCHER" || ! -f "$PROJECT_DETECTOR" ]]; then
+        return 0  # Kein Session-Switching verfügbar, normal weitermachen
+    fi
+    
+    # Aktuelles Projekt erkennen
+    local current_project
+    if ! current_project=$("$PROJECT_DETECTOR" current 2>/dev/null); then
+        # Kein Projekt erkannt, Session-Switching überspringen
+        return 0
+    fi
+    
+    # Prüfen ob Session-Mismatch vorliegt
+    local current_session
+    if current_session=$("$SESSION_SWITCHER" status | grep "Aktuelle Session" | cut -d: -f2 | xargs 2>/dev/null); then
+        # Wenn Session nicht zum Projekt passt, warnen aber nicht blockieren
+        if [[ "$current_session" != "$current_project" ]]; then
+            echo -e "${YELLOW}⚠ Session-Mismatch erkannt:${NC}"
+            echo -e "   Aktuelle Session: ${CYAN}$current_session${NC}"
+            echo -e "   Projekt-Kontext: ${CYAN}$current_project${NC}"
+            echo -e "${BLUE}💡 Tipp: Verwenden Sie './claude-switch.sh switch $current_project' für optimale Erfahrung${NC}"
+            echo
+        fi
+    fi
+    
+    return 0
+}
 
 # Funktion für Hilfe
 show_help() {
@@ -47,6 +83,8 @@ show_help() {
     echo -e "  ${GREEN}./todo health${NC}       # Health Check des Completion-Systems"
     echo -e "  ${GREEN}./todo emergency <id>${NC} # Emergency Completion für Todo"
     echo -e "  ${GREEN}./todo daemon${NC}       # Startet Monitor-Daemon"
+    echo -e "  ${GREEN}./todo switch <projekt>${NC} # Wechselt zu anderem Projekt"
+    echo -e "  ${GREEN}./todo session${NC}      # Zeigt Session-Status"
     echo -e "  ${GREEN}./todo help${NC}         # Zeigt diese Hilfe"
     echo ""
     echo "Verhalten:"
@@ -54,12 +92,14 @@ show_help() {
     echo "  • ./todo -id lädt ein spezifisches Todo und beendet danach"
     echo "  • Bei Abschluss werden HTML, Text und Summary automatisch generiert"
     echo "  • Claude's Outputs werden automatisch erfasst und gespeichert"
+    echo "  • Session-Switching warnt bei Projekt-Mismatch und bietet Wechsel an"
 }
 
 # Hauptlogik
 case "$1" in
     "")
         # Kein Parameter - lade nächstes Todo (Loop-Modus)
+        check_project_session  # Session-Check vor Todo-Load
         echo -e "${BLUE}Loading next todo...${NC}"
         python3 "$MANAGER" load
         ;;
@@ -71,6 +111,7 @@ case "$1" in
             echo "Usage: ./todo -id <ID>"
             exit 1
         fi
+        check_project_session  # Session-Check vor Todo-Load
         echo -e "${BLUE}Loading todo #$2...${NC}"
         python3 "$MANAGER" load-id "$2"
         ;;
@@ -126,6 +167,41 @@ case "$1" in
         echo -e "${BLUE}Starting completion monitor daemon...${NC}"
         echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
         python3 "$COMPLETION_MONITOR" --daemon
+        ;;
+    
+    "switch")
+        # Session wechseln
+        if [[ ! -f "$SESSION_SWITCHER" ]]; then
+            echo -e "${RED}Error: Session-Switcher nicht verfügbar${NC}"
+            echo -e "${YELLOW}Session-Switching System ist nicht installiert${NC}"
+            exit 1
+        fi
+        
+        if [ -z "$2" ]; then
+            echo -e "${RED}Error: Projekt-Name erforderlich${NC}"
+            echo "Usage: ./todo switch <projekt>"
+            echo
+            echo -e "${BLUE}Verfügbare Projekte:${NC}"
+            "$SESSION_SWITCHER" list
+            exit 1
+        fi
+        
+        # TASK_COMPLETED sicherstellen
+        if [[ ! -f "/tmp/TASK_COMPLETED" ]]; then
+            echo -e "${YELLOW}⚠ Setze TASK_COMPLETED vor Session-Wechsel${NC}"
+            echo 'TASK_COMPLETED' > /tmp/TASK_COMPLETED
+        fi
+        
+        "$SESSION_SWITCHER" switch "$2"
+        ;;
+    
+    "session")
+        # Session-Status anzeigen
+        if [[ ! -f "$SESSION_SWITCHER" ]]; then
+            echo -e "${YELLOW}Session-Switching System nicht verfügbar${NC}"
+            exit 0
+        fi
+        "$SESSION_SWITCHER" status
         ;;
     
     "help"|"-h"|"--help")

@@ -31,7 +31,7 @@ ADD COLUMN execution_started_at DATETIME NULL AFTER plan_created_at;
 ## 📁 GEÄNDERTE DATEIEN
 
 ### 1. **todo_manager.py** (Hook System)
-- **Pfad:** `/home/rodemkay/www/react/todo/hooks/todo_manager.py`
+- **Pfad:** `/home/rodemkay/www/react/plugin-todo/hooks/todo_manager.py`
 - **Änderungen:**
   - Import von `planning_mode` Modul (Zeilen 131-138)
   - Erweiterte `get_todo_by_id()` - lädt mode und plan_approved (Zeilen 70-88)
@@ -39,7 +39,7 @@ ADD COLUMN execution_started_at DATETIME NULL AFTER plan_created_at;
   - Mode-spezifische Anweisungen beim Todo-Laden (Zeilen 169-170, 202-203)
 
 ### 2. **planning_mode.py** (Neu erstellt)
-- **Pfad:** `/home/rodemkay/www/react/todo/hooks/planning_mode.py`
+- **Pfad:** `/home/rodemkay/www/react/plugin-todo/hooks/planning_mode.py`
 - **Funktionen:**
   - `generate_plan_html(todo)` - Erstellt formatierte HTML-Pläne
   - `get_mode_instruction(todo)` - Gibt mode-spezifische Anweisungen für Claude

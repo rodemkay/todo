@@ -2,8 +2,8 @@
 
 ## 🎯 PROJEKT-ÜBERSICHT
 **Projektname:** todo (ehemals wp-project-todos)  
-**Hauptverzeichnis:** `/home/rodemkay/www/react/todo/`  
-**Dokumentation:** `/home/rodemkay/www/react/todo/docs/`  
+**Hauptverzeichnis:** `/home/rodemkay/www/react/plugin-todo/`  
+**Dokumentation:** `/home/rodemkay/www/react/plugin-todo/docs/`  
 **Plugin-Pfad:** `/var/www/forexsignale/staging/wp-content/plugins/todo/`  
 **Status:** ✅ V3.0 VOLLSTÄNDIG IMPLEMENTIERT (2025-01-21)
 
@@ -43,7 +43,7 @@
 
 ### 1.1 Neue Verzeichnisstruktur erstellen
 ```
-/home/rodemkay/www/react/todo/
+/home/rodemkay/www/react/plugin-todo/
 ├── docs/                        # Projektdokumentation
 │   ├── screenshots/             # UI-Referenzbilder (bereits vorhanden)
 │   ├── IMPLEMENTATION_PLAN.md   # Dieser Plan
@@ -81,7 +81,7 @@
 
 ### 1.2 Datei-Migration vom Mount
 **Quelle:** `/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/wp-content/plugins/wp-project-todos/`
-**Ziel:** `/home/rodemkay/www/react/todo/plugin/`
+**Ziel:** `/home/rodemkay/www/react/plugin-todo/plugin/`
 
 **Zu kopierende Dateien:**
 - Alle PHP-Dateien (Klassen, Admin-Interface)
@@ -231,7 +231,7 @@ CREATE TABLE wp_todo_directories (
 
 -- Standard-Verzeichnisse
 INSERT INTO wp_todo_directories (path, label, is_default) VALUES
-('/home/rodemkay/www/react/todo/', 'Todo Projekt', 1),
+('/home/rodemkay/www/react/plugin-todo/', 'Todo Projekt', 1),
 ('/home/rodemkay/www/react/', 'React Hauptverzeichnis', 0),
 ('/var/www/forexsignale/staging/', 'ForexSignale Staging', 0),
 ('/home/rodemkay/', 'Home', 0);
@@ -360,7 +360,7 @@ test('Dashboard renders all elements', async ({ page }) => {
 
 # Sync to staging
 rsync -avz --exclude='.git' --exclude='node_modules' \
-    /home/rodemkay/www/react/todo/plugin/ \
+    /home/rodemkay/www/react/plugin-todo/plugin/ \
     rodemkay@159.69.157.54:/var/www/forexsignale/staging/wp-content/plugins/wp-project-todos/
 
 # Run tests
@@ -509,7 +509,7 @@ jobs:
 
 ### Wichtige Änderungen
 1. **Projektname**: wp-project-todos → todo
-2. **Hauptverzeichnis**: /home/rodemkay/www/react/todo/
+2. **Hauptverzeichnis**: /home/rodemkay/www/react/plugin-todo/
 3. **Claude Toggle**: Global → Individual pro Task
 4. **UI**: Zurück zum ursprünglichen modernen Design
 

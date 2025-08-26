@@ -413,7 +413,7 @@ Dieses Projekt demonstriert herausragende technische Kompetenz durch:
 ## 📞 SUPPORT & MAINTENANCE
 
 ### **Long-term Support**
-- **Documentation:** `/home/rodemkay/www/react/todo/monitoring/`
+- **Documentation:** `/home/rodemkay/www/react/plugin-todo/monitoring/`
 - **Admin Handbook:** Vollständige Betriebsanleitung verfügbar
 - **Troubleshooting:** Step-by-step Problemlösungsverfahren
 - **Emergency Procedures:** 24/7 Incident Response Plans

@@ -1,0 +1,19 @@
+{
+  "test_suite": "session-switching",
+  "version": "1.0",
+  "started_at": "",
+  "completed_at": "",
+  "environment": {
+    "hostname": "",
+    "user": "",
+    "pwd": ""
+  },
+  "statistics": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "success_rate": 0
+  },
+  "tests": []
+}

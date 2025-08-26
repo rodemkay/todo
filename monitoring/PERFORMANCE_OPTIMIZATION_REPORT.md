@@ -233,7 +233,7 @@ PERFORMANCE ANALYSIS:
 ### Quick Start:
 ```bash
 # 1. Setup (automatische Installation)
-cd /home/rodemkay/www/react/todo/monitoring/
+cd /home/rodemkay/www/react/plugin-todo/monitoring/
 ./setup-monitoring.sh
 
 # 2. Starten

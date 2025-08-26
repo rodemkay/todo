@@ -108,7 +108,7 @@ echo "./todo -test $(date +%s)" > /home/rodemkay/www/react/mounts/hetzner/forexs
 - **Impact:** 0% → 99.9% Erfolgsrate
 
 ### **Bug #2: Hook System TASK_COMPLETED Recognition (KRITISCH)**  
-- **Datei:** `/home/rodemkay/www/react/todo/hooks/consistency_validator.py`
+- **Datei:** `/home/rodemkay/www/react/plugin-todo/hooks/consistency_validator.py`
 - **Zeile:** 74
 - **Fix:** Bedingung `and "echo" not in command` entfernt
 - **Impact:** 0% → 100% Task-Completion-Recognition

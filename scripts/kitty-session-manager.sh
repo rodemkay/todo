@@ -9,7 +9,7 @@ KITTY_SOCKET="unix:/tmp/kitty-$USER"
 
 # Project directories
 declare -A PROJECTS=(
-    ["todo"]="/home/rodemkay/www/react/todo"
+    ["todo"]="/home/rodemkay/www/react/plugin-todo"
     ["forex"]="/home/rodemkay/www/react/forexsignale"
     ["trading"]="/home/rodemkay/trading"
     ["staging"]="/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging"

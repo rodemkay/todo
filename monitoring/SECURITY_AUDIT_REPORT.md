@@ -89,7 +89,7 @@ Port 8089: Webhook Receiver (Tailscale only) ✅ Secure
 ├── Executable: 755 (www-data:www-data) ✅ Correct
 └── Config files: 600 (www-data:www-data) ✅ Secure
 
-/home/rodemkay/www/react/todo/
+/home/rodemkay/www/react/plugin-todo/
 ├── Scripts: 755 (rodemkay:rodemkay) ✅ Correct
 ├── Config: 600 (rodemkay:rodemkay) ✅ Secure  
 ├── Logs: 640 (rodemkay:rodemkay) ✅ Correct
@@ -423,7 +423,7 @@ limit_req zone=webhook burst=5 nodelay;
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/security-scripts/setup-2fa.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/security-scripts/setup-2fa.sh
 
 echo "🔐 Setting up Two-Factor Authentication for WordPress..."
 
@@ -445,7 +445,7 @@ echo "📱 Admin users should now configure their TOTP apps"
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/security-scripts/enhance-security-headers.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/security-scripts/enhance-security-headers.sh
 
 echo "🛡️ Implementing enhanced security headers..."
 
@@ -491,7 +491,7 @@ fi
 
 ```bash
 #!/bin/bash
-# /home/rodemkay/www/react/todo/monitoring/security-scripts/security-monitor.sh
+# /home/rodemkay/www/react/plugin-todo/monitoring/security-scripts/security-monitor.sh
 
 # Automated security monitoring script
 LOG_FILE="/home/rodemkay/backups/security-monitor.log"

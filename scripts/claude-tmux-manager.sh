@@ -143,7 +143,7 @@ quickstart() {
     
     case $choice in
         1)
-            create_session "claude-todo" "/home/rodemkay/www/react/todo"
+            create_session "claude-todo" "/home/rodemkay/www/react/plugin-todo"
             ;;
         2)
             create_session "claude-forex" "/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging"

@@ -23,8 +23,8 @@
     "current_todo": "/tmp/CURRENT_TODO_ID",
     "task_completed": "/tmp/TASK_COMPLETED",
     "specific_mode": "/tmp/SPECIFIC_TODO_MODE",
-    "logs": "/home/rodemkay/www/react/todo/hooks/logs",
-    "archive": "/home/rodemkay/www/react/todo/hooks/archive",
+    "logs": "/home/rodemkay/www/react/plugin-todo/hooks/logs",
+    "archive": "/home/rodemkay/www/react/plugin-todo/hooks/archive",
     "sessions": "/tmp/claude_sessions"
   },
   "logging": {

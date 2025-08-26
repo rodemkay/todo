@@ -21,7 +21,7 @@ This handbook provides comprehensive guidance for administrators managing the Wo
 ssh rodemkay@100.89.207.122  # or Tailscale IP
 
 # 2. Navigate to project directory
-cd /home/rodemkay/www/react/todo/monitoring
+cd /home/rodemkay/www/react/plugin-todo/monitoring
 
 # 3. Check overall system health
 ./service-scripts/health-check.sh
@@ -252,10 +252,10 @@ systemctl status webhook-socket-server
 sudo journalctl -u webhook-socket-server -n 50
 
 # 3. Check configuration
-python3 -c "import sys; sys.path.append('/home/rodemkay/www/react/todo/monitoring'); import socket_server"
+python3 -c "import sys; sys.path.append('/home/rodemkay/www/react/plugin-todo/monitoring'); import socket_server"
 
 # 4. Verify permissions
-ls -la /home/rodemkay/www/react/todo/monitoring/socket_server.py
+ls -la /home/rodemkay/www/react/plugin-todo/monitoring/socket_server.py
 ```
 
 **Common Solutions:**
@@ -383,7 +383,7 @@ df -h /home/rodemkay/backups
 2. **Emergency Recovery:**
    ```bash
    # Run disaster recovery
-   cd /home/rodemkay/www/react/todo/monitoring
+   cd /home/rodemkay/www/react/plugin-todo/monitoring
    ./recovery-scripts/disaster-recovery.sh latest
    ```
 
@@ -505,14 +505,14 @@ df -h /home/rodemkay/backups
 ```bash
 # Configuration Files
 /home/rodemkay/.env                    # Environment variables
-/home/rodemkay/www/react/todo/CLAUDE.md   # Project instructions
+/home/rodemkay/www/react/plugin-todo/CLAUDE.md   # Project instructions
 
 # Service Configurations
 /etc/systemd/system/webhook-*.service  # Service definitions
 /etc/logrotate.d/webhook-system        # Log rotation config
 
 # Application Files
-/home/rodemkay/www/react/todo/monitoring/   # Main application
+/home/rodemkay/www/react/plugin-todo/monitoring/   # Main application
 /var/www/forexsignale/staging/wp-content/plugins/todo/  # WordPress plugin
 
 # Backup Locations
@@ -555,7 +555,7 @@ free -h
 
 **System Administrator:** rodemkay  
 **Emergency Escalation:** [Configure as needed]  
-**Documentation Location:** `/home/rodemkay/www/react/todo/monitoring/`  
+**Documentation Location:** `/home/rodemkay/www/react/plugin-todo/monitoring/`  
 **Support Repository:** `github.com/rodemkay/todo-webhook-system`
 
 ## 🎓 TRAINING & CERTIFICATION

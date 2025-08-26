@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Claude Toggle Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 40px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        /* Claude Toggle Icon Styles - NEU OHNE BUTTON */
+        .claude-toggle-icon {
+            cursor: pointer;
+            font-size: 28px;
+            display: inline-block;
+            transition: all 0.2s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            padding: 8px;
+            border-radius: 4px;
+            line-height: 1;
+            vertical-align: middle;
+        }
+        .claude-toggle-icon:hover {
+            transform: scale(1.15);
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .claude-toggle-icon:active {
+            transform: scale(0.95);
+        }
+        .claude-toggle-icon.active {
+            color: #10b981;
+        }
+        .claude-toggle-icon.inactive {
+            color: #ef4444;
+        }
+        .claude-toggle-icon.processing {
+            opacity: 0.4;
+            pointer-events: none;
+            cursor: not-allowed;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.2; }
+            100% { opacity: 0.4; }
+        }
+        
+        .status-text {
+            margin-left: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .log {
+            margin-top: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Claude Toggle Icon Test</h1>
+        <p>Dies zeigt das neue Design ohne Button - nur Haken/Kreuz Icons mit verbessertem Doppelklick-Schutz.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Task ID</th>
+                    <th>Task Name</th>
+                    <th>Claude Modus</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>#171</td>
+                    <td>Dashboard Claude Button ändern</td>
+                    <td>
+                        <span class="ajax-claude-toggle claude-toggle-icon active" 
+                              data-todo-id="171"
+                              data-nonce="test123"
+                              title="Claude ist aktiviert (Klicken zum Deaktivieren)">
+                            ✅
+                        </span>
+                    </td>
+                    <td class="status-text">Aktiviert</td>
+                </tr>
+                <tr>
+                    <td>#245</td>
+                    <td>Agent Output Management</td>
+                    <td>
+                        <span class="ajax-claude-toggle claude-toggle-icon inactive" 
+                              data-todo-id="245"
+                              data-nonce="test456"
+                              title="Claude ist deaktiviert (Klicken zum Aktivieren)">
+                            ❌
+                        </span>
+                    </td>
+                    <td class="status-text">Deaktiviert</td>
+                </tr>
+                <tr>
+                    <td>#199</td>
+                    <td>Ausgabe Test</td>
+                    <td>
+                        <span class="ajax-claude-toggle claude-toggle-icon active" 
+                              data-todo-id="199"
+                              data-nonce="test789"
+                              title="Claude ist aktiviert (Klicken zum Deaktivieren)">
+                            ✅
+                        </span>
+                    </td>
+                    <td class="status-text">Aktiviert</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="log" id="log">
+            <strong>Event Log:</strong><br>
+        </div>
+    </div>
+    
+    <script>
+    $(document).ready(function() {
+        function addLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            $('#log').append('<div class="log-entry">[' + timestamp + '] ' + message + '</div>');
+            $('#log').scrollTop($('#log')[0].scrollHeight);
+        }
+        
+        // Claude Toggle Icon mit Doppelklick-Schutz
+        $('.ajax-claude-toggle').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const $toggle = $(this);
+            const todoId = $toggle.data('todo-id');
+            
+            // Verhindere Doppelklick während der Verarbeitung
+            if ($toggle.hasClass('processing')) {
+                addLog('❌ Click ignoriert - Toggle #' + todoId + ' wird bereits verarbeitet');
+                return false;
+            }
+            
+            const isActive = $toggle.hasClass('active');
+            addLog('👆 Click auf Toggle #' + todoId + ' (Status: ' + (isActive ? 'aktiv' : 'inaktiv') + ')');
+            
+            // Visuelles Feedback und Schutz vor Doppelklick
+            $toggle.addClass('processing');
+            addLog('⏳ Verarbeitung gestartet für Toggle #' + todoId);
+            
+            // Simuliere AJAX-Request
+            setTimeout(function() {
+                const newStatus = !isActive;
+                
+                if (newStatus) {
+                    $toggle.removeClass('inactive').addClass('active');
+                    $toggle.text('✅');
+                    $toggle.attr('title', 'Claude ist aktiviert (Klicken zum Deaktivieren)');
+                    $toggle.closest('tr').find('.status-text').text('Aktiviert');
+                    addLog('✅ Toggle #' + todoId + ' aktiviert');
+                } else {
+                    $toggle.removeClass('active').addClass('inactive');
+                    $toggle.text('❌');
+                    $toggle.attr('title', 'Claude ist deaktiviert (Klicken zum Aktivieren)');
+                    $toggle.closest('tr').find('.status-text').text('Deaktiviert');
+                    addLog('❌ Toggle #' + todoId + ' deaktiviert');
+                }
+                
+                $toggle.removeClass('processing');
+                addLog('✔️ Verarbeitung abgeschlossen für Toggle #' + todoId);
+            }, 800); // Simulierte Verzögerung
+            
+            return false; // Verhindere Event-Bubbling
+        });
+        
+        addLog('🚀 Test-Seite geladen - Klicke auf die Icons zum Testen');
+    });
+    </script>
+</body>
+</html>

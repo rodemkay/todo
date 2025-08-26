@@ -43,7 +43,7 @@ Dokumentiert warum diese Dummy-Dateien existieren müssen.
 ## Wichtig
 - Diese Dummy-Dateien NICHT löschen!
 - Sie tun nichts, verhindern aber Fehlermeldungen
-- Das funktionale Hook-System ist in `/home/rodemkay/www/react/todo/hooks/`
+- Das funktionale Hook-System ist in `/home/rodemkay/www/react/plugin-todo/hooks/`
 
 ---
 **Gelöst:** 2025-08-20

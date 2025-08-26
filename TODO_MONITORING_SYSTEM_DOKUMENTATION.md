@@ -221,7 +221,7 @@ LOG_FILE="/tmp/intelligent_todo_monitor.log"
 ### **SCHRITT 1: DATEIEN PLATZIEREN**
 
 ```bash
-cd /home/rodemkay/www/react/todo/
+cd /home/rodemkay/www/react/plugin-todo/
 chmod +x intelligent_todo_monitor_fixed.sh
 chmod +x monitor
 ```

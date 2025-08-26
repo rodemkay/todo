@@ -17,7 +17,7 @@ DB_NAME="staging_forexsignale"
 DB_PREFIX="stage_"
 
 # Pfade
-CLAUDE_SESSION_DIR="/home/rodemkay/www/react/todo"
+CLAUDE_SESSION_DIR="/home/rodemkay/www/react/plugin-todo"
 LOG_FILE="/tmp/intelligent_todo_monitor.log"
 CLAUDE_STATUS_FILE="/tmp/claude_working_status.txt"
 LAST_CHECK_FILE="/tmp/last_todo_check.txt"

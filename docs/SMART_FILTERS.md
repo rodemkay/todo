@@ -1345,4 +1345,4 @@ console.log('Filter Cache:', window.smartFilter.filterCache);
 **Status:** ✅ PRODUKTIONSREIF - ALLE KERNFEATURES IMPLEMENTIERT  
 **Performance:** Durchschnittliche Filter-Zeit <50ms  
 **Maintenance:** Claude Code System  
-**Support:** `/home/rodemkay/www/react/todo/docs/`
+**Support:** `/home/rodemkay/www/react/plugin-todo/docs/`

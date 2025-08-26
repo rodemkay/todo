@@ -25,7 +25,7 @@
 | Formular-Feld | Datenbank-Spalte | Beschreibung | Standard |
 |--------------|------------------|--------------|----------|
 | project (dropdown) | default_project | Projekt-Name | To-Do Plugin |
-| working_directory | working_directory | Arbeitsverzeichnis-Pfad | /home/rodemkay/www/react/todo/ |
+| working_directory | working_directory | Arbeitsverzeichnis-Pfad | /home/rodemkay/www/react/plugin-todo/ |
 | dev_area | development_area | Frontend, Backend, Full-Stack | Backend |
 
 ### Claude & Agent Konfiguration

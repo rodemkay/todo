@@ -59,7 +59,7 @@ sudo rm -rf /var/www/forexsignale/staging/wp-content/plugins/wp-project-todos/
 
 ### Backup vorhanden:
 - Mount: `/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/`
-- Lokale Kopie: `/home/rodemkay/www/react/todo/plugin/`
+- Lokale Kopie: `/home/rodemkay/www/react/plugin-todo/plugin/`
 
 ## ✅ VERIFIKATION
 

@@ -41,4 +41,4 @@ Nach `handle_completion()` muss die Funktion beendet werden, da `handle_completi
 
 ---
 **Behoben:** 2025-08-20
-**Datei:** `/home/rodemkay/www/react/todo/hooks/todo_manager.py`
+**Datei:** `/home/rodemkay/www/react/plugin-todo/hooks/todo_manager.py`

@@ -355,7 +355,7 @@ npm run test:security # No vulnerabilities ✅
 
 ### Support-Kanäle  
 - **Primary:** SSH zu `rodemkay@159.69.157.54`
-- **Documentation:** `/home/rodemkay/www/react/todo/docs/`
+- **Documentation:** `/home/rodemkay/www/react/plugin-todo/docs/`
 - **Git-Issues:** Für Feature-Requests und Bug-Reports
 - **Emergency:** Direct Claude Code CLI Integration
 

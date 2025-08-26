@@ -3,7 +3,7 @@
 ## ✅ WAS WURDE ERLEDIGT
 
 ### 1. Projekt-Reorganisation
-- **Neues Hauptverzeichnis:** `/home/rodemkay/www/react/todo/`
+- **Neues Hauptverzeichnis:** `/home/rodemkay/www/react/plugin-todo/`
 - **Projektname:** `todo` (nicht mehr wp-project-todos)
 - **Plugin-Pfad NEU:** `/var/www/forexsignale/staging/wp-content/plugins/todo/`
 
@@ -53,7 +53,7 @@ tmux session "claude" - LINKES PANE!
 
 ### 1. Deploy zum Hetzner Server
 ```bash
-cd /home/rodemkay/www/react/todo
+cd /home/rodemkay/www/react/plugin-todo
 ./scripts/deploy.sh staging
 ```
 
@@ -83,7 +83,7 @@ git push -u origin main
 ## 📁 PROJEKT-STRUKTUR
 
 ```
-/home/rodemkay/www/react/todo/
+/home/rodemkay/www/react/plugin-todo/
 ├── .env                 # Alle Passwörter & IPs
 ├── .gitignore           # Schützt sensitive Daten
 ├── CLAUDE.md            # Claude-Instruktionen

@@ -6,22 +6,22 @@ Umfassende Dokumentations-Updates für alle neuen Features und Komponenten des e
 ## 📋 DOKUMENTATIONEN ZUM UPDATE
 
 ### 1. HAUPTDOKUMENTATION
-- **Datei:** `/home/rodemkay/www/react/todo/CLAUDE.md`
+- **Datei:** `/home/rodemkay/www/react/plugin-todo/CLAUDE.md`
 - **Status:** 🔄 Aktualisierung erforderlich
 - **Priorität:** HOCH - Hauptinstruktionen für Claude
 
 ### 2. PLANNING MODE DOKUMENTATION  
-- **Datei:** `/home/rodemkay/www/react/todo/docs/PLANNING_MODE_COMPLETE.md`
+- **Datei:** `/home/rodemkay/www/react/plugin-todo/docs/PLANNING_MODE_COMPLETE.md`
 - **Status:** ✅ Bereits vollständig
 - **Priorität:** NIEDRIG - Nur Ergänzungen
 
 ### 3. AKTUELLER STATUS
-- **Datei:** `/home/rodemkay/www/react/todo/docs/CURRENT_STATUS.md`
+- **Datei:** `/home/rodemkay/www/react/plugin-todo/docs/CURRENT_STATUS.md`
 - **Status:** 🔄 Komplett überholen
 - **Priorität:** HOCH - Projekt-Fortschritt
 
 ### 4. IMPLEMENTIERUNGSPLAN
-- **Datei:** `/home/rodemkay/www/react/todo/docs/IMPLEMENTATION_PLAN.md`
+- **Datei:** `/home/rodemkay/www/react/plugin-todo/docs/IMPLEMENTATION_PLAN.md`
 - **Status:** 🔄 Roadmap aktualisieren
 - **Priorität:** MITTEL - Zukünftige Features
 

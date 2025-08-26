@@ -2,9 +2,9 @@
 
 ## 🎯 PROJEKT-ÜBERSICHT
 **Projektname:** todo (NICHT mehr wp-project-todos!)  
-**Hauptverzeichnis:** `/home/rodemkay/www/react/todo/`  
+**Hauptverzeichnis:** `/home/rodemkay/www/react/plugin-todo/`  
 **Plugin-Pfad:** `/var/www/forexsignale/staging/wp-content/plugins/todo/` ⚠️ KEIN wp-project-todos mehr!  
-**Dokumentation:** `/home/rodemkay/www/react/todo/docs/`
+**Dokumentation:** `/home/rodemkay/www/react/plugin-todo/docs/`
 
 ## 🖥️ ENVIRONMENT & INFRASTRUKTUR
 
@@ -13,7 +13,7 @@
 2. **Start-Script:** `/home/rodemkay/.local/bin/kitty_claude_fresh.sh`
 3. **Session:** tmux Session "claude" - LINKES PANE empfängt Befehle!
 4. **Claude kann Befehle empfangen während der Arbeit** - Das ist normal!
-5. **Working Directory:** `/home/rodemkay/www/react/todo/`
+5. **Working Directory:** `/home/rodemkay/www/react/plugin-todo/`
 6. **WICHTIG für ./todo:** Befehle kommen im LINKEN PANE an!
 
 ### Server-Architektur
@@ -70,7 +70,7 @@
 ## 📂 VERZEICHNISSTRUKTUR
 
 ```
-/home/rodemkay/www/react/todo/
+/home/rodemkay/www/react/plugin-todo/
 ├── docs/                    # Dokumentation & Screenshots
 │   ├── screenshots/         # UI-Referenzbilder
 │   └── IMPLEMENTATION_PLAN.md
@@ -186,20 +186,20 @@ Edit("rodemkay@159.69.157.54:/var/www/file.php", old, new)  # FUNKTIONIERT NICHT
 
 ### 3. Hook Violations
 - Problem: TodoWrite mit non-numeric IDs
-- Fix: `/home/rodemkay/www/react/todo/hooks/clear_violations.sh reset`
+- Fix: `/home/rodemkay/www/react/plugin-todo/hooks/clear_violations.sh reset`
 
 ## 🚀 DEPLOYMENT
 
 ### Sync zum Staging
 ```bash
-rsync -avz /home/rodemkay/www/react/todo/plugin/ \
-  rodemkay@159.69.157.54:/var/www/forexsignale/staging/wp-content/plugins/wp-project-todos/
+rsync -avz /home/rodemkay/www/react/plugin-todo/plugin/ \
+  rodemkay@159.69.157.54:/var/www/forexsignale/staging/wp-content/plugins/todo/
 ```
 
 ### Testing
 ```bash
 # Playwright Tests ausführen
-cd /home/rodemkay/www/react/todo
+cd /home/rodemkay/www/react/plugin-todo
 npm test
 ```
 
@@ -209,7 +209,7 @@ npm test
 
 **ALLE DOKUMENTATIONEN MÜSSEN IN `/docs/` GESPEICHERT WERDEN!**
 
-1. **📁 Zentrale Speicherung:** Alle Docs gehören in `/home/rodemkay/www/react/todo/docs/`
+1. **📁 Zentrale Speicherung:** Alle Docs gehören in `/home/rodemkay/www/react/plugin-todo/docs/`
 2. **🏷️ Klare Bezeichnungen:** Dateinamen müssen SOFORT erkennbar machen worum es geht
 3. **❓ Bei Fragen IMMER zuerst in die Docs schauen** bevor neue Dokumentation erstellt wird
 4. **📝 Aktuelle Updates:** Dokumentationen müssen immer auf dem neuesten Stand gehalten werden

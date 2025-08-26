@@ -10,7 +10,7 @@
 ### 1. **Mehrere Kitty Sessions** (Empfohlen)
 ```bash
 # Für jedes Projekt eine eigene Session
-kitty @ new-session --name claude-todo --cwd /home/rodemkay/www/react/todo
+kitty @ new-session --name claude-todo --cwd /home/rodemkay/www/react/plugin-todo
 kitty @ new-session --name claude-forex --cwd /home/rodemkay/www/react/forexsignale
 kitty @ new-session --name claude-trading --cwd /home/rodemkay/trading
 
@@ -22,7 +22,7 @@ kitty @ focus-tab --match title:claude-forex
 ### 2. **Tmux Sessions pro Projekt**
 ```bash
 # Tmux Sessions erstellen
-tmux new-session -d -s claude-todo -c /home/rodemkay/www/react/todo
+tmux new-session -d -s claude-todo -c /home/rodemkay/www/react/plugin-todo
 tmux new-session -d -s claude-forex -c /home/rodemkay/www/react/forexsignale
 
 # Session wechseln
@@ -40,7 +40,7 @@ tmux send-keys -t claude-todo "claude" Enter
 PROJECT=$1
 case $PROJECT in
     todo)
-        cd /home/rodemkay/www/react/todo
+        cd /home/rodemkay/www/react/plugin-todo
         ;;
     forex)
         cd /home/rodemkay/www/react/forexsignale

@@ -1,23 +1,42 @@
-# 🔄 Claude Code Projekt-Wechsel Guide
+# 🔄 CLAUDE PROJECT SWITCHING SYSTEM - TECHNISCHE DOKUMENTATION
 
-## 📋 Übersicht
-Dieser Guide zeigt verschiedene Methoden zum Wechseln zwischen Projekten in Claude Code.
+## 🎯 ÜBERSICHT
 
-## 🚀 Quick Start
+Ein robustes System zum nahtlosen Wechseln zwischen verschiedenen Claude-Sessions in unterschiedlichen Projektordnern. Das System ermöglicht es, von der aktuellen Claude-Session zu einer anderen zu wechseln, ohne Datenverlust oder Session-Konflikte.
 
-### Sofort verfügbare Scripts:
+**Version:** 2.0 (Erweitert am 2025-08-25)  
+**Status:** ✅ ANALYSIERT UND DESIGNT - Bereit für Implementierung
+
+## 📊 AKTUELLE SESSION-ANALYSE
+
+### Tmux-Session-Struktur
 ```bash
-# Einfacher Projekt-Wechsel
-/home/rodemkay/www/react/todo/scripts/claude-switch-project.sh
-
-# TMUX Manager für mehrere Sessions
-/home/rodemkay/www/react/todo/scripts/claude-tmux-manager.sh
-
-# Aliases einrichten
-/home/rodemkay/www/react/todo/scripts/setup-claude-aliases.sh
+# Aktuelle Claude-Session (analysiert am 2025-08-25)
+Session: claude
+├── Window: react (aktiv)
+│   ├── Pane 0 (links, ~90%): Claude Code CLI (PID: 3520856)
+│   └── Pane 1 (rechts, ~10%): Bash Terminal
 ```
 
-## 📂 Methode 1: Manueller Wechsel
+### Identifizierte Projekte
+```
+/home/rodemkay/www/react/
+├── plugin-article/         # Article Builder Plugin
+├── plugin-todo/           # Todo System (AKTUELL AKTIV)
+├── plugin-wp-project-todos/ # Legacy Todo System
+└── [root]/                # ForexSignale Magazine (Hauptprojekt)
+```
+
+### Start-Scripts
+```
+/home/rodemkay/.local/bin/
+├── kitty_claude_fresh_todo.sh  # Todo-Projekt (AKTUELL)
+└── kitty_claude_7030.sh        # Alternatives Start-Script
+```
+
+## 🏗️ SYSTEM-ARCHITEKTUR
+
+### 1. Session-Manager (Hauptkomponente)
 
 ### Schritt-für-Schritt:
 1. **Claude Code beenden:**
@@ -50,7 +69,7 @@ Dieser Guide zeigt verschiedene Methoden zum Wechseln zwischen Projekten in Clau
 
 #### Neue Session erstellen:
 ```bash
-tmux new-session -s claude-todo -c /home/rodemkay/www/react/todo
+tmux new-session -s claude-todo -c /home/rodemkay/www/react/plugin-todo
 ```
 
 #### Zwischen Sessions wechseln:
@@ -77,7 +96,7 @@ tmux list-sessions
 ### claude-switch-project.sh
 Interaktives Menü für Projekt-Wechsel:
 ```bash
-/home/rodemkay/www/react/todo/scripts/claude-switch-project.sh
+/home/rodemkay/www/react/plugin-todo/scripts/claude-switch-project.sh
 ```
 
 Features:
@@ -89,7 +108,7 @@ Features:
 ### claude-tmux-manager.sh
 Fortgeschrittenes TMUX Management:
 ```bash
-/home/rodemkay/www/react/todo/scripts/claude-tmux-manager.sh
+/home/rodemkay/www/react/plugin-todo/scripts/claude-tmux-manager.sh
 ```
 
 Features:
@@ -103,10 +122,10 @@ Features:
 ### Setup:
 ```bash
 # Aliases automatisch einrichten
-/home/rodemkay/www/react/todo/scripts/setup-claude-aliases.sh
+/home/rodemkay/www/react/plugin-todo/scripts/setup-claude-aliases.sh
 
 # Oder manuell zu ~/.bashrc hinzufügen:
-alias claude-todo='cd /home/rodemkay/www/react/todo && claude --resume --dangerously-skip-permissions'
+alias claude-todo='cd /home/rodemkay/www/react/plugin-todo && claude --resume --dangerously-skip-permissions'
 alias claude-forex='cd /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging && claude --resume --dangerously-skip-permissions'
 ```
 
@@ -126,7 +145,7 @@ claude-list
 
 | Projekt | Pfad |
 |---------|------|
-| Todo Plugin | `/home/rodemkay/www/react/todo` |
+| Todo Plugin | `/home/rodemkay/www/react/plugin-todo` |
 | ForexSignale | `/home/rodemkay/www/react/mounts/hetzner/forexsignale/staging` |
 | Breakout Brain | `/home/rodemkay/www/react/breakout-brain` |
 | Development | `/home/rodemkay/www/react/development` |
@@ -192,4 +211,4 @@ mount | grep sshfs
 ---
 
 **Erstellt:** 2025-08-22
-**Script-Verzeichnis:** `/home/rodemkay/www/react/todo/scripts/`
+**Script-Verzeichnis:** `/home/rodemkay/www/react/plugin-todo/scripts/`

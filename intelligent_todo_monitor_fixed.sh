@@ -36,9 +36,18 @@ check_claude_active() {
                 claude_active=true
                 reason="Todo #$current_id in Bearbeitung"
             else
-                # Todo ist nicht mehr in_progress - bereinige alte Datei
-                log_message "🧹 Bereinige veraltete CURRENT_TODO_ID für abgeschlossenes Todo #$current_id"
-                rm -f /tmp/CURRENT_TODO_ID
+                # Todo ist nicht mehr in_progress - ABER warte auf TASK_COMPLETED!
+                # Prüfe ZUERST ob TASK_COMPLETED existiert
+                if [ ! -f "/tmp/TASK_COMPLETED" ]; then
+                    # Nur löschen wenn KEIN TASK_COMPLETED wartet
+                    log_message "🧹 Bereinige veraltete CURRENT_TODO_ID für abgeschlossenes Todo #$current_id"
+                    rm -f /tmp/CURRENT_TODO_ID
+                else
+                    # TASK_COMPLETED existiert - NICHT löschen!
+                    log_message "⏸️ CURRENT_TODO_ID behalten - TASK_COMPLETED wartet auf Verarbeitung"
+                    claude_active=true
+                    reason="TASK_COMPLETED wartet auf Verarbeitung für Todo #$current_id"
+                fi
             fi
         fi
     fi
@@ -129,6 +138,7 @@ check_stale_todos() {
 find_next_todo() {
     log_message "🔍 Suche nächstes Todo..."
     
+    # NUR offene Todos mit bearbeiten=1 laden (KEINE in_progress!)
     local query="SELECT id, title, priority FROM ${DB_PREFIX}project_todos WHERE status = 'offen' AND bearbeiten = 1 ORDER BY CASE priority WHEN 'kritisch' THEN 1 WHEN 'hoch' THEN 2 WHEN 'mittel' THEN 3 WHEN 'niedrig' THEN 4 END, created_at ASC LIMIT 1"
     local next_todo=$(execute_sql "$query")
     
@@ -163,8 +173,8 @@ start_todo() {
     # Status aktualisieren
     execute_sql "UPDATE ${DB_PREFIX}project_todos SET status = 'in_progress', started_date = NOW() WHERE id = $todo_id"
     
-    # Trigger-Datei erstellen
-    echo "./todo -id $todo_id" > /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/wp-content/uploads/claude_trigger.txt
+    # Trigger-Datei erstellen - NUR ./todo ohne ID!
+    echo "./todo" > /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging/wp-content/uploads/claude_trigger.txt
     
     log_message "✅ Todo #$todo_id gestartet - Trigger erstellt"
 }

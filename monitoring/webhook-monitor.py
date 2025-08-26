@@ -45,7 +45,7 @@ class AlertConfig:
 
 class WebhookMonitor:
     def __init__(self, config_path: str = None):
-        self.config_path = config_path or "/home/rodemkay/www/react/todo/hooks/config.json"
+        self.config_path = config_path or "/home/rodemkay/www/react/plugin-todo/hooks/config.json"
         self.metrics_db_path = "/tmp/webhook_metrics.db"
         self.log_files = {
             'trigger': '/tmp/claude_local_trigger.log',

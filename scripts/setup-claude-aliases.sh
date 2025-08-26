@@ -8,11 +8,11 @@ echo ""
 echo "Füge diese Zeilen zu deiner ~/.bashrc oder ~/.zshrc hinzu:"
 echo ""
 echo "# Claude Code Project Management"
-echo "alias claude-switch='/home/rodemkay/www/react/todo/scripts/claude-switch-project.sh'"
-echo "alias claude-tmux='/home/rodemkay/www/react/todo/scripts/claude-tmux-manager.sh'"
+echo "alias claude-switch='/home/rodemkay/www/react/plugin-todo/scripts/claude-switch-project.sh'"
+echo "alias claude-tmux='/home/rodemkay/www/react/plugin-todo/scripts/claude-tmux-manager.sh'"
 echo ""
 echo "# Schnell-Wechsel zu Projekten"
-echo "alias claude-todo='cd /home/rodemkay/www/react/todo && claude --resume --dangerously-skip-permissions'"
+echo "alias claude-todo='cd /home/rodemkay/www/react/plugin-todo && claude --resume --dangerously-skip-permissions'"
 echo "alias claude-forex='cd /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging && claude --resume --dangerously-skip-permissions'"
 echo "alias claude-brain='cd /home/rodemkay/www/react/breakout-brain && claude --resume --dangerously-skip-permissions'"
 echo ""
@@ -61,11 +61,11 @@ if [ "$answer" = "y" ] || [ "$answer" = "Y" ]; then
     cat >> "$CONFIG_FILE" << 'EOF'
 
 # Claude Code Project Management (added by setup-claude-aliases.sh)
-alias claude-switch='/home/rodemkay/www/react/todo/scripts/claude-switch-project.sh'
-alias claude-tmux='/home/rodemkay/www/react/todo/scripts/claude-tmux-manager.sh'
+alias claude-switch='/home/rodemkay/www/react/plugin-todo/scripts/claude-switch-project.sh'
+alias claude-tmux='/home/rodemkay/www/react/plugin-todo/scripts/claude-tmux-manager.sh'
 
 # Schnell-Wechsel zu Projekten
-alias claude-todo='cd /home/rodemkay/www/react/todo && claude --resume --dangerously-skip-permissions'
+alias claude-todo='cd /home/rodemkay/www/react/plugin-todo && claude --resume --dangerously-skip-permissions'
 alias claude-forex='cd /home/rodemkay/www/react/mounts/hetzner/forexsignale/staging && claude --resume --dangerously-skip-permissions'
 alias claude-brain='cd /home/rodemkay/www/react/breakout-brain && claude --resume --dangerously-skip-permissions'
 

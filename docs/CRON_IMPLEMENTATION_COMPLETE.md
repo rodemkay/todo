@@ -51,7 +51,7 @@
 ### Komponenten-Übersicht
 
 ```
-📁 /home/rodemkay/www/react/todo/cron/
+📁 /home/rodemkay/www/react/plugin-todo/cron/
 ├── cron_engine.py          # 🚀 Haupt-Engine (Python)
 ├── cron_scheduler.py       # ⏰ Schedule-Management
 ├── cron_executor.py        # ⚡ Command-Execution
@@ -94,7 +94,7 @@ After=network.target
 [Service]
 Type=simple
 User=rodemkay
-WorkingDirectory=/home/rodemkay/www/react/todo/cron
+WorkingDirectory=/home/rodemkay/www/react/plugin-todo/cron
 ExecStart=/usr/bin/python3 cron_engine.py
 Restart=always
 RestartSec=10
@@ -175,7 +175,7 @@ WantedBy=multi-user.target
    curl -X POST https://api.example.com/webhook
    ```
 5. **Arbeitsverzeichnis wählen:** 
-   - `/home/rodemkay/www/react/todo/`
+   - `/home/rodemkay/www/react/plugin-todo/`
    - `/var/www/forexsignale/staging/`
    - Oder custom Pfad
 6. **Speichern & Aktivieren**
@@ -198,10 +198,10 @@ WantedBy=multi-user.target
 sudo systemctl status todo-cron
 
 # Live-Logs verfolgen  
-tail -f /home/rodemkay/www/react/todo/cron/logs/cron_engine.log
+tail -f /home/rodemkay/www/react/plugin-todo/cron/logs/cron_engine.log
 
 # Execution History
-tail -f /home/rodemkay/www/react/todo/cron/logs/execution_history.log
+tail -f /home/rodemkay/www/react/plugin-todo/cron/logs/execution_history.log
 ```
 
 ### 🔧 Troubleshooting
@@ -220,7 +220,7 @@ tail -f /home/rodemkay/www/react/todo/cron/logs/execution_history.log
 2. **Befehl schlägt fehl:**
    ```bash
    # Error-Log prüfen
-   cat /home/rodemkay/www/react/todo/cron/logs/error.log
+   cat /home/rodemkay/www/react/plugin-todo/cron/logs/error.log
    
    # Manueller Test
    cd /working/directory && your-command
@@ -385,7 +385,7 @@ WHERE is_cron=1 AND updated_at > DATE_SUB(NOW(), INTERVAL 24 HOUR)"
 ### Logging-System
 
 ```
-📁 /home/rodemkay/www/react/todo/cron/logs/
+📁 /home/rodemkay/www/react/plugin-todo/cron/logs/
 ├── cron_engine.log          # Engine Status & Lifecycle  
 ├── execution_history.log    # Alle Job-Ausführungen
 ├── error.log               # Fehler & Exceptions
@@ -411,10 +411,10 @@ def send_error_alert(job_id, error_message):
 
 ```bash
 # 1. Python Dependencies
-pip3 install -r /home/rodemkay/www/react/todo/cron/requirements.txt
+pip3 install -r /home/rodemkay/www/react/plugin-todo/cron/requirements.txt
 
 # 2. Systemd Service
-sudo cp /home/rodemkay/www/react/todo/cron/todo-cron.service /etc/systemd/system/
+sudo cp /home/rodemkay/www/react/plugin-todo/cron/todo-cron.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable todo-cron
 sudo systemctl start todo-cron
@@ -423,14 +423,14 @@ sudo systemctl start todo-cron
 wp plugin activate todo
 
 # 4. Database Schema Update
-wp db query "SOURCE /home/rodemkay/www/react/todo/database/cron_migrations.sql"
+wp db query "SOURCE /home/rodemkay/www/react/plugin-todo/database/cron_migrations.sql"
 ```
 
 ### Wartungs-Tasks
 
 ```bash
 # Wöchentlich: Log-Rotation
-find /home/rodemkay/www/react/todo/cron/logs/ -name "*.log" -mtime +7 -exec gzip {} \;
+find /home/rodemkay/www/react/plugin-todo/cron/logs/ -name "*.log" -mtime +7 -exec gzip {} \;
 
 # Monatlich: Execution History cleanup
 wp db query "DELETE FROM stage_project_todos WHERE is_cron=1 AND updated_at < DATE_SUB(NOW(), INTERVAL 3 MONTH)"
