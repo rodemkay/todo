@@ -6,7 +6,8 @@
 
 LOG_FILE="/home/rodemkay/www/react/plugin-todo/hooks/logs/auto-check.log"
 CHECK_INTERVAL=30
-TMUX_SESSION="claude"
+# Hardcoded auf plugin-todo für dieses Projekt
+TMUX_SESSION="plugin-todo"
 TMUX_PANE="0.0"  # Linkes Pane
 
 log_message() {
@@ -16,13 +17,17 @@ log_message() {
 log_message "Auto-Check Script gestartet"
 
 while true; do
-    # Prüfe ob Claude beschäftigt ist
+    # Prüfe ob Claude beschäftigt ist oder bereits ein TODO gesendet wurde
     if [ -f "/tmp/CURRENT_TODO_ID" ]; then
         # Claude arbeitet bereits an einem Todo
         log_message "Claude ist beschäftigt - überspringe Check"
+    elif [ -f "/tmp/TODO_SENT_TO_CLAUDE" ]; then
+        # TODO wurde bereits gesendet, warte auf Verarbeitung
+        sent_id=$(cat /tmp/TODO_SENT_TO_CLAUDE 2>/dev/null)
+        log_message "TODO #$sent_id bereits an Claude gesendet - warte auf Verarbeitung"
     else
-        # Prüfe ob neue Todos vorhanden sind (auch in_progress falls Claude abstürzte)
-        NEW_TODOS=$(ssh rodemkay@159.69.157.54 "cd /var/www/forexsignale/staging && wp db query 'SELECT COUNT(*) FROM stage_project_todos WHERE (status=\"offen\" OR status=\"in_progress\") AND bearbeiten=1' --skip-column-names" 2>/dev/null | tr -d '\r\n' | grep -o '[0-9]*' | head -1)
+        # KRITISCH: NUR status='offen' UND bearbeiten=1 prüfen!
+        NEW_TODOS=$(ssh rodemkay@159.69.157.54 "cd /var/www/forexsignale/staging && wp db query 'SELECT COUNT(*) FROM stage_project_todos WHERE status=\"offen\" AND bearbeiten=1' --skip-column-names" 2>/dev/null | tr -d '\r\n' | grep -o '[0-9]*' | head -1)
         
         # Debug-Ausgabe
         log_message "SQL-Ergebnis: '$NEW_TODOS'"
@@ -30,12 +35,22 @@ while true; do
         if [ -n "$NEW_TODOS" ] && [ "$NEW_TODOS" -gt "0" ] 2>/dev/null; then
             log_message "Gefunden: $NEW_TODOS neue Todos mit bearbeiten=1"
             
-            # Sende ./todo Befehl an Claude Session
-            tmux send-keys -t "${TMUX_SESSION}:${TMUX_PANE}" "./todo" C-m
-            log_message "Befehl './todo' an Claude gesendet"
+            # Hole die ID des ersten TODOs
+            TODO_ID=$(ssh rodemkay@159.69.157.54 "cd /var/www/forexsignale/staging && wp db query 'SELECT id FROM stage_project_todos WHERE status=\"offen\" AND bearbeiten=1 ORDER BY priority DESC, id ASC LIMIT 1' --skip-column-names" 2>/dev/null | tr -d '\r\n')
             
-            # Warte kurz bis Todo geladen ist
-            sleep 5
+            if [ -n "$TODO_ID" ]; then
+                # Markiere TODO als gesendet
+                echo "$TODO_ID" > /tmp/TODO_SENT_TO_CLAUDE
+                
+                # Sende ./todo Befehl an Claude Session - erst Text, dann Enter separat
+                tmux send-keys -t "${TMUX_SESSION}:${TMUX_PANE}" -l "./todo"
+                sleep 0.5
+                tmux send-keys -t "${TMUX_SESSION}:${TMUX_PANE}" C-m
+                log_message "Befehl './todo' an Claude gesendet für TODO #$TODO_ID (Text + C-m)"
+                
+                # Warte kurz bis Todo geladen ist
+                sleep 5
+            fi
         else
             log_message "Keine neuen Todos gefunden (Count: $NEW_TODOS)"
         fi

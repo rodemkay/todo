@@ -46,7 +46,12 @@ def ssh_command(cmd):
         return "", 1
 
 def get_next_todo():
-    """Hole nächstes Todo mit ALLEN Feldern (V3.0 Feature)"""
+    """
+    Hole nächstes Todo mit ALLEN Feldern (V3.0 Feature)
+    
+    ⚠️ KRITISCHE REGEL: NUR TODOs mit status='offen' UND bearbeiten=1!
+    Diese Regel ist ABSOLUT und darf NIEMALS geändert werden!
+    """
     # V3.0: Erweiterte Datenladung - ALLE 30+ Felder laden
     fields = [
         'id', 'title', 'description', 'status', 'bearbeiten', 'mode', 'plan_approved',
@@ -55,10 +60,10 @@ def get_next_todo():
         'assigned_to', 'due_date', 'completed_date', 'is_recurring', 'recurring_type',
         'claude_notes', 'claude_prompt', 'bemerkungen', 'continuation_notes',
         'plan_html', 'report_url', 'related_files', 'dependencies', 'parent_todo_id',
-        'created_at', 'updated_at', 'save_agent_outputs', 'prompt_output'
+        'created_at', 'updated_at', 'save_agent_outputs'
     ]
     
-    # Original query ohne Projekt-Filter
+    # KRITISCH: NUR status='offen' UND bearbeiten=1 - BEIDE Bedingungen MÜSSEN erfüllt sein!
     base_query = f"SELECT {', '.join(fields)} FROM {CONFIG['database']['table_prefix']}project_todos WHERE status='offen' AND bearbeiten=1 ORDER BY priority DESC, id ASC LIMIT 1"
     
     # Projekt-Filter hinzufügen falls aktives Projekt existiert
@@ -110,7 +115,6 @@ def get_next_todo():
                     'created_at': parts[31] if len(parts) > 31 else '',
                     'updated_at': parts[32] if len(parts) > 32 else '',
                     'save_agent_outputs': parts[33] if len(parts) > 33 else '0',
-                    'prompt_output': parts[34] if len(parts) > 34 else ''
                 }
                 
                 # Log erweiterte Datenladung
@@ -129,7 +133,7 @@ def get_todo_by_id(todo_id):
         'assigned_to', 'due_date', 'completed_date', 'is_recurring', 'recurring_type',
         'claude_notes', 'claude_prompt', 'bemerkungen', 'continuation_notes',
         'plan_html', 'report_url', 'related_files', 'dependencies', 'parent_todo_id',
-        'created_at', 'updated_at', 'save_agent_outputs', 'prompt_output'
+        'created_at', 'updated_at', 'save_agent_outputs'
     ]
     
     query = f"SELECT {', '.join(fields)} FROM {CONFIG['database']['table_prefix']}project_todos WHERE id={todo_id}"
@@ -204,7 +208,6 @@ def get_todo_by_id(todo_id):
                 'created_at': parts[31] if len(parts) > 31 else '',
                 'updated_at': parts[32] if len(parts) > 32 else '',
                 'save_agent_outputs': parts[33] if len(parts) > 33 else '0',
-                'prompt_output': parts[34] if len(parts) > 34 else ''
             }
             
             # Log erweiterte Datenladung
@@ -338,13 +341,24 @@ def load_todo(todo_id=None):
                 print(f"⚠️ Konnte Agent-Output-Ordner nicht erstellen: {e}")
                 log("WARNING", f"Failed to create agent-output directory: {e}")
             
-            # NEUE PROMPT_OUTPUT LOGIK - Primary Output anzeigen falls vorhanden
-            if todo.get('prompt_output') and len(todo.get('prompt_output', '')) > 10:
+            # PROMPT LOGIK - Verwende nur noch claude_prompt
+            prompt_content = todo.get('claude_prompt', '')
+            
+            if prompt_content and len(prompt_content) > 10:
                 print(f"\n📋 PROMPT OUTPUT (aus Datenbank):")
                 print("=" * 50)
-                print(todo.get('prompt_output'))
+                print(prompt_content)
                 print("=" * 50)
-                print("✅ Prompt Output aus Datenbank geladen - keine weitere Verarbeitung!")
+                print("✅ Prompt Output aus Datenbank geladen!")
+                
+                # AUTO-EXECUTE für claude_prompt erstellen!
+                auto_execute_file = Path("/tmp/CLAUDE_AUTO_EXECUTE")
+                with open(auto_execute_file, 'w') as f:
+                    f.write(f"# TODO #{todo['id']}: {todo['title']}\n\n")
+                    f.write(prompt_content)
+                print(f"\n🚀 AUTO-EXECUTE: Prompt wurde für automatische Ausführung bereitgestellt")
+                print(f"   Datei: {auto_execute_file}")
+                log("INFO", f"Auto-execute prompt saved for TODO #{todo['id']} from claude_prompt")
                 
                 # ID speichern mit Validierung (VOR Status-Änderung!)
                 with open(CONFIG["paths"]["current_todo"], 'w') as f:
@@ -362,7 +376,7 @@ def load_todo(todo_id=None):
                 Path(CONFIG["paths"]["specific_mode"]).touch()
                 
                 # Kein Status-Update nötig, da prompt_output bereits existiert
-                log("INFO", f"Loaded specific todo #{todo['id']} with existing prompt_output")
+                log("INFO", f"Loaded specific todo #{todo['id']} with existing claude_prompt")
                 return todo
             
             # FALLBACK: Alte Logik wenn kein prompt_output vorhanden
@@ -437,6 +451,16 @@ if (\\$success) {{
                 print("=" * 50)
                 print(final_prompt)
                 print("=" * 50)
+                
+                # NEU: Automatisch claude_prompt als Eingabe bereitstellen
+                # Speichere den Prompt in eine Datei, die Claude automatisch ausführen soll
+                auto_execute_file = Path("/tmp/CLAUDE_AUTO_EXECUTE")
+                with open(auto_execute_file, 'w') as f:
+                    f.write(f"# TODO #{todo['id']}: {todo['title']}\n\n")
+                    f.write(final_prompt)
+                print(f"\n🚀 AUTO-EXECUTE: Prompt wurde für automatische Ausführung bereitgestellt")
+                print(f"   Datei: {auto_execute_file}")
+                log("INFO", f"Auto-execute prompt saved for TODO #{todo['id']}")
             
             # ID speichern mit Validierung (VOR Status-Änderung!)
             with open(CONFIG["paths"]["current_todo"], 'w') as f:
@@ -463,10 +487,12 @@ if (\\$success) {{
                     print("● Previous query still processing. Todo remains in 'offen' status.")
                     return None
             
-            # Claude ist verfügbar, jetzt Lock erstellen und Status ändern
+            # Claude ist verfügbar, jetzt Lock erstellen
+            # WICHTIG: Status wird NICHT mehr sofort geändert!
+            # Der Status bleibt 'offen' bis Claude wirklich mit der Arbeit beginnt
             lock_file.touch()
-            set_todo_status(todo['id'], 'in_progress')
-            print("✅ Todo successfully loaded and status changed to: in_progress")
+            # set_todo_status(todo['id'], 'in_progress')  # DEAKTIVIERT - verursacht Probleme
+            print("✅ Todo successfully loaded (status remains 'offen' for now)")
             
             # Specific mode marker setzen
             Path(CONFIG["paths"]["specific_mode"]).touch()
@@ -493,13 +519,24 @@ if (\\$success) {{
             print(f"Description: {todo['description'][:200]}...")
             print(f"Current Status: {todo.get('status', 'offen')}")
             
-            # NEUE PROMPT_OUTPUT LOGIK - Primary Output anzeigen falls vorhanden
-            if todo.get('prompt_output') and len(todo.get('prompt_output', '')) > 10:
+            # PROMPT LOGIK - Verwende nur noch claude_prompt
+            prompt_content = todo.get('claude_prompt', '')
+            
+            if prompt_content and len(prompt_content) > 10:
                 print(f"\n📋 PROMPT OUTPUT (aus Datenbank):")
                 print("=" * 50)
-                print(todo.get('prompt_output'))
+                print(prompt_content)
                 print("=" * 50)
-                print("✅ Prompt Output aus Datenbank geladen - keine weitere Verarbeitung!")
+                print("✅ Prompt Output aus Datenbank geladen!")
+                
+                # AUTO-EXECUTE für claude_prompt erstellen!
+                auto_execute_file = Path("/tmp/CLAUDE_AUTO_EXECUTE")
+                with open(auto_execute_file, 'w') as f:
+                    f.write(f"# TODO #{todo['id']}: {todo['title']}\n\n")
+                    f.write(prompt_content)
+                print(f"\n🚀 AUTO-EXECUTE: Prompt wurde für automatische Ausführung bereitgestellt")
+                print(f"   Datei: {auto_execute_file}")
+                log("INFO", f"Auto-execute prompt saved for TODO #{todo['id']} from claude_prompt")
                 
                 # ID speichern (VOR Status-Änderung!)
                 with open(CONFIG["paths"]["current_todo"], 'w') as f:
@@ -518,7 +555,7 @@ if (\\$success) {{
                     Path(CONFIG["paths"]["specific_mode"]).unlink()
                 
                 # Kein Status-Update nötig, da prompt_output bereits existiert
-                log("INFO", f"Loaded next todo #{todo['id']} with existing prompt_output")
+                log("INFO", f"Loaded next todo #{todo['id']} with existing claude_prompt")
                 return todo
             
             # FALLBACK: Alte Logik wenn kein prompt_output vorhanden
@@ -593,6 +630,16 @@ if (\\$success) {{
                 print("=" * 50)
                 print(final_prompt)
                 print("=" * 50)
+                
+                # NEU: Automatisch claude_prompt als Eingabe bereitstellen
+                # Speichere den Prompt in eine Datei, die Claude automatisch ausführen soll
+                auto_execute_file = Path("/tmp/CLAUDE_AUTO_EXECUTE")
+                with open(auto_execute_file, 'w') as f:
+                    f.write(f"# TODO #{todo['id']}: {todo['title']}\n\n")
+                    f.write(final_prompt)
+                print(f"\n🚀 AUTO-EXECUTE: Prompt wurde für automatische Ausführung bereitgestellt")
+                print(f"   Datei: {auto_execute_file}")
+                log("INFO", f"Auto-execute prompt saved for TODO #{todo['id']}")
             
             # ID speichern (VOR Status-Änderung!)
             with open(CONFIG["paths"]["current_todo"], 'w') as f:
@@ -633,10 +680,12 @@ if (\\$success) {{
                         print("● Previous query still processing. Todo remains in 'offen' status.")
                         return None
                 
-                # Claude ist verfügbar, jetzt Lock erstellen und Status ändern
+                # Claude ist verfügbar, jetzt Lock erstellen
+                # WICHTIG: Status wird NICHT mehr sofort geändert!
+                # Der Status bleibt 'offen' bis Claude wirklich mit der Arbeit beginnt
                 lock_file.touch()
-                set_todo_status(todo['id'], 'in_progress')
-                print("✅ Todo successfully loaded and status changed to: in_progress")
+                # set_todo_status(todo['id'], 'in_progress')  # DEAKTIVIERT - verursacht Probleme
+                print("✅ Todo successfully loaded (status remains 'offen' for now)")
             else:
                 print(f"Status remains: {todo.get('status')}")
             

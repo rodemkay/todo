@@ -301,12 +301,12 @@ WHERE id={todo_id}"""
         try:
             # Prüfe tmux sessions
             result = subprocess.run(["tmux", "list-sessions"], capture_output=True, text=True, timeout=10)
-            if result.returncode == 0 and "claude" in result.stdout:
-                logging.warning(f"🔄 tmux session 'claude' still active during emergency")
+            if result.returncode == 0 and "plugin-todo" in result.stdout:
+                logging.warning(f"🔄 tmux session 'plugin-todo' still active during emergency")
                 
                 # Könnte hier tmux session killen, aber das ist sehr drastisch
                 # logging.warning("💀 Killing tmux session (emergency)")
-                # subprocess.run(["tmux", "kill-session", "-t", "claude"], timeout=10)
+                # subprocess.run(["tmux", "kill-session", "-t", "plugin-todo"], timeout=10)
                 
         except Exception as e:
             logging.warning(f"⚠️ Force terminate attempt failed: {e}")

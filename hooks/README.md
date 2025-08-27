@@ -34,10 +34,11 @@ echo 'TASK_COMPLETED' > /tmp/TASK_COMPLETED
 ## Verhalten
 
 ### Loop-Modus (`./todo`)
-1. Lädt nächstes Todo mit `status='offen'` UND `bearbeiten=1`
+1. Lädt nächstes Todo mit `status='offen'` UND `bearbeiten=1` (⚠️ KRITISCH: BEIDE Bedingungen!)
 2. Setzt Status auf `in_progress`
 3. Nach Abschluss: Automatisch nächstes Todo
 4. Läuft bis ALLE offenen Todos abgearbeitet sind
+⚠️ WICHTIG: in_progress TODOs werden NICHT geladen, nur status='offen'!
 
 ### Einzel-Modus (`./todo -id`)
 1. Lädt spezifisches Todo, egal welcher Status

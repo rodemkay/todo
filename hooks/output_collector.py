@@ -39,7 +39,7 @@ class OutputCollector:
         try:
             # Versuche tmux pane content zu lesen
             result = subprocess.run(
-                ["tmux", "capture-pane", "-t", "claude:0.0", "-p"],
+                ["tmux", "capture-pane", "-t", "plugin-todo:0.0", "-p"],
                 capture_output=True, text=True
             )
             if result.returncode == 0:

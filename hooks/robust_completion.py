@@ -101,7 +101,7 @@ class RobustCompletion:
         # Method 3: tmux Capture Fallback
         try:
             result = subprocess.run(
-                ["tmux", "capture-pane", "-t", "claude:0.0", "-p"],
+                ["tmux", "capture-pane", "-t", "plugin-todo:0.0", "-p"],
                 capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0 and result.stdout:
@@ -148,7 +148,7 @@ Task wurde erfolgreich abgeschlossen durch Claude Code CLI.
 {self._generate_text_output_section_markdown(outputs)}
 
 ## 📊 System Information
-- **Environment:** Ryzen Server (tmux: claude)
+- **Environment:** Ryzen Server (tmux: plugin-todo)
 - **Working Directory:** {todo_data.get('working_directory', '/home/rodemkay/www/react/plugin-todo/')}
 - **Scope:** {todo_data.get('scope', 'todo-plugin')}
 """

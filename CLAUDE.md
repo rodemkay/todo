@@ -46,7 +46,14 @@
 
 ## 🚨 KRITISCHE REGELN
 
-### 1. HOOK SYSTEM WORKFLOW (V3.0 ERWEITERT!)
+### 1. TODO-AUSWAHL - NUR BEARBEITEN=1 UND STATUS=OFFEN !!!
+**⚠️ EXTREM WICHTIG:** Der `./todo` Befehl darf NUR TODOs mit `bearbeiten=1` UND `status='offen'` auswählen!
+- BEIDE Bedingungen MÜSSEN erfüllt sein: bearbeiten=1 UND status='offen'
+- Alle anderen TODOs (in_progress, completed, etc.) werden IGNORIERT
+- Mit `-id` kann ein spezifisches TODO geladen werden (ignoriert beide Flags)
+- Diese Regel ist ABSOLUT und darf NIEMALS ignoriert werden!
+
+### 2. HOOK SYSTEM WORKFLOW (V3.0 ERWEITERT!)
 - **VOLLSTÄNDIGE DATENLADUNG:** Jeder `./todo` Aufruf lädt ALLE Felder (id, titel, beschreibung, status, prioritaet, projekt, entwicklungsbereich, working_directory, plan, claude_notes, bemerkungen, created_at, updated_at)
 - **TASK COMPLETION:** Tasks die durch `./todo` gestartet wurden, MÜSSEN mit `TASK_COMPLETED` beendet werden
 - **WIEDERVORLAGE:** Bei unvollständigen Tasks `./todo defer` verwenden für intelligente Terminierung
@@ -54,13 +61,13 @@
 - NIEMALS Tasks offen lassen oder Session beenden ohne TASK_COMPLETED
 - **WICHTIG:** WP-CLI `--format=json` funktioniert NICHT mit `wp db query` (MariaDB-Limitation)
 
-### 2. TODOWRITE VERWENDUNG
+### 3. TODOWRITE VERWENDUNG
 - NUR für echte Datenbank-Todos mit numerischen IDs verwenden
 - NIEMALS für interne Planung oder temporäre Notizen
 - Bei Subagents: IMMER explizit verbieten TodoWrite zu verwenden
 - **NEU:** TodoWrite unterstützt jetzt alle erweiterten Felder (plan, claude_notes, bemerkungen)
 
-### 3. CLAUDE TOGGLE SYSTEM & ERWEITERTE UI
+### 4. CLAUDE TOGGLE SYSTEM & ERWEITERTE UI
 - Jede Aufgabe hat INDIVIDUELLEN Claude Toggle (❌ Claude / ✓ Claude)
 - **NEU:** Erweiterte Floating Button Bar mit zusätzlichen Aktionen:
   - Bearbeiten, Löschen, Duplizieren, Archivieren, Quick-Status-Change
@@ -154,8 +161,9 @@ Edit("rodemkay@159.69.157.54:/var/www/file.php", old, new)  # FUNKTIONIERT NICHT
 ### CLI-Befehle (v3.0 - VOLLSTÄNDIG ERWEITERT!)
 ```bash
 # Standard-Befehle (MIT VOLLSTÄNDIGER DATENLADUNG)
-./todo              # Lädt vollständige TODO-Daten (alle Felder, nicht nur ID/Titel)
-./todo -id 67       # Spezifisches Todo mit ALLEN Feldern (Beschreibung, Plan, etc.)
+# ⚠️ KRITISCH: ./todo lädt NUR TODOs mit bearbeiten=1 UND status='offen' !!! 
+./todo              # Lädt vollständige TODO-Daten (NUR bearbeiten=1 UND status='offen'!)
+./todo -id 67       # Spezifisches Todo mit ALLEN Feldern (ignoriert beide Filter)
 ./todo complete     # Abschließen mit automatischer Output-Sammlung
 ./todo defer        # NEU: Wiedervorlage mit Terminierung und Kontext-Erhaltung
 ./todo status       # Aktueller Status mit erweiterten Informationen
@@ -310,7 +318,7 @@ npm test
 ## 🔄 WORKFLOW V3.0
 
 ### Standard-Workflow:
-1. `./todo` lädt nächstes TODO mit **allen Datenfeldern**
+1. `./todo` lädt nächstes TODO mit **allen Datenfeldern** (⚠️ NUR bearbeiten=1 UND status='offen'!)
 2. Bearbeitung mit **vollständigem Kontext** (Plan, Notizen, Arbeitsverzeichnis)
 3. `./todo complete` für **Abschluss mit Output-Sammlung** ODER
 4. `./todo defer` für **intelligente Terminierung mit Kontext-Erhaltung**
@@ -354,5 +362,5 @@ npm test
 
 ---
 
-**Letzte Aktualisierung:** 2025-01-21 (V3.0 KOMPLETT!)  
-**Version:** 3.0.0 - VOLLSTÄNDIGE FEATURE-IMPLEMENTIERUNG
+**Letzte Aktualisierung:** 2025-01-27 (KRITISCHE REGEL: NUR bearbeiten=1 UND status='offen'!)  
+**Version:** 3.0.2 - TODO-AUSWAHL NUR MIT bearbeiten=1 UND status='offen'!
