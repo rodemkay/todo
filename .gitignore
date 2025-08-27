@@ -51,4 +51,4 @@ coverage/
 # Session files
 /tmp/CURRENT_TODO_ID
 /tmp/TASK_COMPLETED
-task_context.json
+task_context.json.playwright-mcp/
